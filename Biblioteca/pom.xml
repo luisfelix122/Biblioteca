@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.universidad.biblioteca</groupId>
+  <artifactId>Biblioteca</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <properties>
+    <!-- Para compilar a Java 23 -->
+    <maven.compiler.release>23</maven.compiler.release>
+  </properties>
+
+  <dependencies>
+    <!-- Driver JDBC para SQL Server -->
+    <dependency>
+      <groupId>com.microsoft.sqlserver</groupId>
+      <artifactId>mssql-jdbc</artifactId>
+      <version>12.10.1.jre11</version>
+    </dependency>
+  
+    <!-- Apache POI para generar archivos Excel -->
+    <dependency>
+      <groupId>org.apache.poi</groupId>
+      <artifactId>poi-ooxml</artifactId>
+      <version>5.2.3</version>
+    </dependency>
+  
+    <!-- iText 7 para generar PDF -->
+    <dependency>
+      <groupId>com.itextpdf</groupId>
+      <artifactId>kernel</artifactId>
+      <version>9.2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.itextpdf</groupId>
+      <artifactId>layout</artifactId>
+      <version>9.2.0</version>
+    </dependency>
+    <!-- Necesario para iText -->
+    <dependency>
+      <groupId>com.itextpdf</groupId>
+      <artifactId>io</artifactId>
+      <version>9.2.0</version>
+    </dependency>
+  </dependencies>
+  
+
+  <!-- Opcional: quita el plugin exec para evitar el ERROR de main class inexistente -->
+  <build>
+    <plugins>
+      <!-- Descomenta o configura esto cuando tengas tu Main definido -->
+      <!--
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.1.0</version>
+        <configuration>
+          <mainClass>com.universidad.biblioteca.MainApp</mainClass>
+        </configuration>
+      </plugin>
+      -->
+    </plugins>
+  </build>
+</project>
