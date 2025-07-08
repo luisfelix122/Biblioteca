@@ -25,7 +25,6 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.geom.RoundRectangle2D;
 
 // Apache POI imports
 import org.apache.poi.ss.usermodel.Workbook;
@@ -38,13 +37,20 @@ import java.io.FileOutputStream;
 import java.sql.SQLException;
 import java.util.List;
 
+/**
+ * Vista principal del sistema de biblioteca universitaria.
+ * Proporciona una interfaz moderna y funcional para la gestión de préstamos de libros.
+ * 
+ * @author Sistema de Biblioteca
+ * @version 2.0
+ */
 public class MainView extends JFrame {
 
     private final String codigoUser;
     private final LibroDAO libroDAO;
     private final PrestamoDAO prestamoDAO;
 
-    // Colores del tema
+    // Paleta de colores moderna y profesional
     private static final Color PRIMARY_COLOR = new Color(41, 128, 185);
     private static final Color SECONDARY_COLOR = new Color(52, 152, 219);
     private static final Color ACCENT_COLOR = new Color(46, 204, 113);
@@ -56,18 +62,17 @@ public class MainView extends JFrame {
     private static final Color TEXT_PRIMARY = new Color(44, 62, 80);
     private static final Color TEXT_SECONDARY = new Color(127, 140, 141);
 
-    // Componentes UI
+    // Componentes de la interfaz
     private JTabbedPane tabbedPane;
     private JPanel panelCatalogo, panelMisPrestamos, panelHistorial, panelPerfil;
-    private JTextField txtBuscar;
-    private JTextField txtNombre, txtEmail, txtTelefono;
+    private JTextField txtBuscar, txtNombre, txtEmail, txtTelefono;
     private JButton btnBuscar, btnSolicitarPrestamo, btnDevolver;
     private JButton btnExportCatalogo, btnExportHistorial;
     private JButton btnExportCatalogoPDF, btnExportHistorialPDF;
     private JButton btnGuardarPerfil;
     private JTable tblCatalogo, tblMisPrestamos, tblHistorial;
 
-    // Iconos (usando caracteres Unicode)
+    // Iconos usando caracteres Unicode
     private static final String ICON_BOOK = "📚";
     private static final String ICON_SEARCH = "🔍";
     private static final String ICON_ADD = "➕";
@@ -81,25 +86,48 @@ public class MainView extends JFrame {
     private static final String ICON_LOAN = "📖";
     private static final String ICON_CATALOG = "📚";
 
+    /**
+     * Constructor principal de la vista.
+     * @param codigoUser Código del usuario autenticado
+     */
     public MainView(String codigoUser) {
         this.codigoUser = codigoUser;
         
-        // Configurar Look & Feel
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeel());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        // Configurar Look & Feel del sistema
+        configurarLookAndFeel();
         
+        // Inicializar componentes
         initComponents();
         
+        // Inicializar DAOs
         libroDAO = new LibroDAO();
         prestamoDAO = new PrestamoDAO();
         
+        // Configurar eventos
         setupEventHandlers();
+        
+        // Cargar datos iniciales
         loadInitialData();
     }
 
+    /**
+     * Configura el Look and Feel del sistema.
+     */
+    private void configurarLookAndFeel() {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeel());
+            // Configuraciones adicionales de UI
+            UIManager.put("Button.arc", 8);
+            UIManager.put("Component.arc", 8);
+            UIManager.put("TextComponent.arc", 8);
+        } catch (Exception e) {
+            System.err.println("Error al configurar Look and Feel: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Inicializa todos los componentes de la interfaz.
+     */
     private void initComponents() {
         // Configuración principal de la ventana
         setTitle("📚 Sistema de Biblioteca Universitaria - Panel Principal");
@@ -108,8 +136,41 @@ public class MainView extends JFrame {
         setLocationRelativeTo(null);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         
-        // Panel principal con gradiente mejorado
-        JPanel mainPanel = new JPanel() {
+        // Panel principal con gradiente
+        JPanel mainPanel = createMainPanel();
+        
+        // Header elegante
+        JPanel headerPanel = createHeaderPanel();
+        
+        // TabbedPane estilizado
+        tabbedPane = new JTabbedPane();
+        styleEnhancedTabbedPane(tabbedPane);
+        
+        // Crear paneles de contenido
+        createCatalogoPanel();
+        createMisPrestamosPanel();
+        createHistorialPanel();
+        createPerfilPanel();
+        
+        // Agregar tabs con iconos
+        tabbedPane.addTab(ICON_CATALOG + " Catálogo", panelCatalogo);
+        tabbedPane.addTab(ICON_LOAN + " Mis Préstamos", panelMisPrestamos);
+        tabbedPane.addTab(ICON_HISTORY + " Historial", panelHistorial);
+        tabbedPane.addTab(ICON_USER + " Perfil", panelPerfil);
+        
+        // Ensamblar la interfaz
+        mainPanel.add(headerPanel, BorderLayout.NORTH);
+        mainPanel.add(tabbedPane, BorderLayout.CENTER);
+        mainPanel.add(createFooterPanel(), BorderLayout.SOUTH);
+        
+        setContentPane(mainPanel);
+    }
+    
+    /**
+     * Crea el panel principal con gradiente de fondo.
+     */
+    private JPanel createMainPanel() {
+        return new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
@@ -117,7 +178,7 @@ public class MainView extends JFrame {
                 g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 
-                // Gradiente diagonal más suave
+                // Gradiente diagonal suave
                 GradientPaint gradient = new GradientPaint(
                     0, 0, new Color(240, 248, 255),
                     getWidth(), getHeight(), new Color(230, 240, 250)
@@ -134,38 +195,12 @@ public class MainView extends JFrame {
                 }
             }
         };
-        mainPanel.setLayout(new BorderLayout());
-        
-        // Header mejorado
-        JPanel headerPanel = createEnhancedHeaderPanel();
-        
-        // TabbedPane estilizado
-        tabbedPane = new JTabbedPane();
-        styleEnhancedTabbedPane(tabbedPane);
-        
-        // Crear paneles mejorados
-        createEnhancedCatalogoPanel();
-        createEnhancedMisPrestamosPanel();
-        createEnhancedHistorialPanel();
-        createEnhancedPerfilPanel();
-        
-        // Agregar tabs con iconos
-        tabbedPane.addTab(ICON_CATALOG + " Catálogo", panelCatalogo);
-        tabbedPane.addTab(ICON_LOAN + " Mis Préstamos", panelMisPrestamos);
-        tabbedPane.addTab(ICON_HISTORY + " Historial", panelHistorial);
-        tabbedPane.addTab(ICON_USER + " Perfil", panelPerfil);
-        
-        mainPanel.add(headerPanel, BorderLayout.NORTH);
-        mainPanel.add(tabbedPane, BorderLayout.CENTER);
-        
-        // Footer con información adicional
-        JPanel footerPanel = createFooterPanel();
-        mainPanel.add(footerPanel, BorderLayout.SOUTH);
-        
-        setContentPane(mainPanel);
     }
     
-    private JPanel createEnhancedHeaderPanel() {
+    /**
+     * Crea el panel de encabezado con información del usuario.
+     */
+    private JPanel createHeaderPanel() {
         JPanel headerPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -193,6 +228,21 @@ public class MainView extends JFrame {
         headerPanel.setPreferredSize(new Dimension(0, 90));
         
         // Panel izquierdo con logo y título
+        JPanel leftPanel = createHeaderLeftPanel();
+        
+        // Panel derecho con información del usuario
+        JPanel rightPanel = createHeaderRightPanel();
+        
+        headerPanel.add(leftPanel, BorderLayout.WEST);
+        headerPanel.add(rightPanel, BorderLayout.EAST);
+        
+        return headerPanel;
+    }
+    
+    /**
+     * Crea la parte izquierda del header con logo y título.
+     */
+    private JPanel createHeaderLeftPanel() {
         JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         leftPanel.setOpaque(false);
         
@@ -218,7 +268,13 @@ public class MainView extends JFrame {
         leftPanel.add(logoLabel);
         leftPanel.add(titlePanel);
         
-        // Panel derecho con información del usuario
+        return leftPanel;
+    }
+    
+    /**
+     * Crea la parte derecha del header con información del usuario.
+     */
+    private JPanel createHeaderRightPanel() {
         JPanel rightPanel = new JPanel();
         rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
         rightPanel.setOpaque(false);
@@ -242,12 +298,12 @@ public class MainView extends JFrame {
         rightPanel.add(userLabel);
         rightPanel.add(timeLabel);
         
-        headerPanel.add(leftPanel, BorderLayout.WEST);
-        headerPanel.add(rightPanel, BorderLayout.EAST);
-        
-        return headerPanel;
+        return rightPanel;
     }
     
+    /**
+     * Crea el panel de pie de página.
+     */
     private JPanel createFooterPanel() {
         JPanel footerPanel = new JPanel(new BorderLayout());
         footerPanel.setOpaque(false);
@@ -267,6 +323,9 @@ public class MainView extends JFrame {
         return footerPanel;
     }
     
+    /**
+     * Estiliza el TabbedPane principal.
+     */
     private void styleEnhancedTabbedPane(JTabbedPane tabbedPane) {
         tabbedPane.setFont(new Font("Segoe UI", Font.BOLD, 15));
         tabbedPane.setBackground(BACKGROUND_COLOR);
@@ -280,19 +339,22 @@ public class MainView extends JFrame {
         UIManager.put("TabbedPane.foreground", TEXT_PRIMARY);
         UIManager.put("TabbedPane.selectedForeground", PRIMARY_COLOR);
     }
-        private void createEnhancedCatalogoPanel() {
+    
+    /**
+     * Crea el panel del catálogo de libros.
+     */
+    private void createCatalogoPanel() {
         panelCatalogo = new JPanel(new BorderLayout());
         panelCatalogo.setBackground(BACKGROUND_COLOR);
         panelCatalogo.setBorder(new EmptyBorder(25, 25, 25, 25));
         
-        // Card container
         JPanel cardPanel = createCardPanel();
         cardPanel.setLayout(new BorderLayout());
         
-        // Panel de búsqueda mejorado
+        // Panel de búsqueda
         JPanel searchPanel = createSearchPanel();
         
-        // Tabla de catálogo mejorada
+        // Tabla de catálogo
         tblCatalogo = new JTable(new DefaultTableModel(
                 new Object[][]{}, new String[]{"📖 Título", "👨‍💼 Autor", "📅 Año", "✅ Disponible"}
         ));
@@ -301,7 +363,7 @@ public class MainView extends JFrame {
         JScrollPane scrollCatalogo = new JScrollPane(tblCatalogo);
         styleEnhancedScrollPane(scrollCatalogo);
         
-        // Panel de botones mejorado
+        // Panel de botones
         JPanel buttonPanel = createCatalogoButtonPanel();
         
         cardPanel.add(searchPanel, BorderLayout.NORTH);
@@ -311,19 +373,20 @@ public class MainView extends JFrame {
         panelCatalogo.add(cardPanel, BorderLayout.CENTER);
     }
     
+    /**
+     * Crea el panel de búsqueda para el catálogo.
+     */
     private JPanel createSearchPanel() {
         JPanel searchPanel = new JPanel();
         searchPanel.setLayout(new BoxLayout(searchPanel, BoxLayout.Y_AXIS));
         searchPanel.setOpaque(false);
         searchPanel.setBorder(new EmptyBorder(0, 0, 20, 0));
         
-        // Título de sección
         JLabel titleLabel = new JLabel(ICON_SEARCH + " Búsqueda de Libros");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
         titleLabel.setForeground(TEXT_PRIMARY);
         titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         
-        // Panel de búsqueda
         JPanel searchInputPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 10));
         searchInputPanel.setOpaque(false);
         searchInputPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -340,6 +403,11 @@ public class MainView extends JFrame {
         
         JButton btnLimpiar = new JButton("🔄 Limpiar");
         styleEnhancedButton(btnLimpiar, TEXT_SECONDARY, Color.WHITE, false);
+        btnLimpiar.addActionListener(e -> {
+            txtBuscar.setText("Ingrese título, autor o ISBN...");
+            txtBuscar.setForeground(TEXT_SECONDARY);
+            cargarCatalogo();
+        });
         
         searchInputPanel.add(searchLabel);
         searchInputPanel.add(Box.createHorizontalStrut(10));
@@ -356,6 +424,9 @@ public class MainView extends JFrame {
         return searchPanel;
     }
     
+    /**
+     * Crea el panel de botones para el catálogo.
+     */
     private JPanel createCatalogoButtonPanel() {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 15));
         buttonPanel.setOpaque(false);
@@ -376,12 +447,14 @@ public class MainView extends JFrame {
         return buttonPanel;
     }
     
-    private void createEnhancedMisPrestamosPanel() {
+    /**
+     * Crea el panel de mis préstamos.
+     */
+    private void createMisPrestamosPanel() {
         panelMisPrestamos = new JPanel(new BorderLayout());
         panelMisPrestamos.setBackground(BACKGROUND_COLOR);
         panelMisPrestamos.setBorder(new EmptyBorder(25, 25, 25, 25));
         
-        // Card container
         JPanel cardPanel = createCardPanel();
         cardPanel.setLayout(new BorderLayout());
         
@@ -401,7 +474,7 @@ public class MainView extends JFrame {
         headerPanel.add(titleLabel, BorderLayout.WEST);
         headerPanel.add(countLabel, BorderLayout.EAST);
         
-        // Tabla mejorada
+        // Tabla
         tblMisPrestamos = new JTable(new DefaultTableModel(
                 new Object[][]{}, new String[]{"🆔 ID", "📖 Título", "📅 Fecha Préstamo", "⏰ Días Restantes"}
         ));
@@ -424,607 +497,24 @@ public class MainView extends JFrame {
         buttonPanel.add(btnRenovar);
         
         cardPanel.add(headerPanel, BorderLayout.NORTH);
-        cardPanel.add(formPanel, BorderLayout.CENTER);
-        
-        panelPerfil.add(cardPanel, BorderLayout.CENTER);
-    }
-    
-    // Métodos de utilidad para estilizar componentes
-    private JPanel createCardPanel() {
-        JPanel cardPanel = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2d = (Graphics2D) g;
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                
-                // Sombra del card
-                g2d.setColor(new Color(0, 0, 0, 10));
-                g2d.fillRoundRect(3, 3, getWidth() - 3, getHeight() - 3, 15, 15);
-                
-                // Card principal
-                g2d.setColor(CARD_COLOR);
-                g2d.fillRoundRect(0, 0, getWidth() - 3, getHeight() - 3, 15, 15);
-                
-                // Borde sutil
-                g2d.setColor(new Color(0, 0, 0, 20));
-                g2d.drawRoundRect(0, 0, getWidth() - 4, getHeight() - 4, 15, 15);
-            }
-        };
-        cardPanel.setBorder(new EmptyBorder(25, 30, 25, 30));
-        return cardPanel;
-    }
-    
-    private void styleEnhancedTable(JTable table) {
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        table.setRowHeight(45);
-        table.setGridColor(new Color(240, 240, 240));
-        table.setSelectionBackground(new Color(PRIMARY_COLOR.getRed(), PRIMARY_COLOR.getGreen(), PRIMARY_COLOR.getBlue(), 30));
-        table.setSelectionForeground(TEXT_PRIMARY);
-        table.setShowVerticalLines(false);
-        table.setIntercellSpacing(new Dimension(0, 1));
-        
-        // Header personalizado
-        JTableHeader header = table.getTableHeader();
-        header.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        header.setBackground(PRIMARY_COLOR);
-        header.setForeground(Color.WHITE);
-        header.setPreferredSize(new Dimension(0, 50));
-        header.setBorder(BorderFactory.createEmptyBorder());
-        
-        // Renderer personalizado para celdas
-        DefaultTableCellRenderer cellRenderer = new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, 
-                    boolean isSelected, boolean hasFocus, int row, int column) {
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                
-                if (!isSelected) {
-                    c.setBackground(row % 2 == 0 ? Color.WHITE : new Color(248, 249, 250));
-                }
-                
-                setBorder(new EmptyBorder(10, 15, 10, 15));
-                return c;
-            }
-        };
-        
-        for (int i = 0; i < table.getColumnCount(); i++) {
-            table.getColumnModel().getColumn(i).setCellRenderer(cellRenderer);
-        }
-    }
-    
-    private void styleEnhancedScrollPane(JScrollPane scrollPane) {
-        scrollPane.setBorder(BorderFactory.createEmptyBorder());
-        scrollPane.getViewport().setBackground(Color.WHITE);
-        scrollPane.setBackground(Color.WHITE);
-        
-        // Personalizar scrollbars
-        scrollPane.getVerticalScrollBar().setUI(new javax.swing.plaf.basic.BasicScrollBarUI() {
-            @Override
-            protected void configureScrollBarColors() {
-                this.thumbColor = new Color(200, 200, 200);
-                this.trackColor = new Color(245, 245, 245);
-            }
-            
-            @Override
-            protected JButton createDecreaseButton(int orientation) {
-                return createZeroButton();
-            }
-            
-            @Override
-            protected JButton createIncreaseButton(int orientation) {
-                return createZeroButton();
-            }
-            
-            private JButton createZeroButton() {
-                JButton button = new JButton();
-                button.setPreferredSize(new Dimension(0, 0));
-                button.setMinimumSize(new Dimension(0, 0));
-                button.setMaximumSize(new Dimension(0, 0));
-                return button;
-            }
-        });
-    }
-    
-    private void styleEnhancedButton(JButton button, Color bgColor, Color textColor, boolean isPrimary) {
-        button.setFont(new Font("Segoe UI", isPrimary ? Font.BOLD : Font.PLAIN, 13));
-        button.setBackground(bgColor);
-        button.setForeground(textColor);
-        button.setBorder(BorderFactory.createEmptyBorder(12, 25, 12, 25));
-        button.setFocusPainted(false);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
-        // Efectos hover
-        button.addMouseListener(new MouseAdapter() {
-            Color originalColor = bgColor;
-            
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                button.setBackground(originalColor.darker());
-            }
-            
-            @Override
-            public void mouseExited(MouseEvent e) {
-                button.setBackground(originalColor);
-            }
-        });
-        
-        // Bordes redondeados
-        button.setUI(new javax.swing.plaf.basic.BasicButtonUI() {
-            @Override
-            public void paint(Graphics g, JComponent c) {
-                Graphics2D g2d = (Graphics2D) g;
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                
-                if (c.getModel().isPressed()) {
-                    g2d.setColor(bgColor.darker().darker());
-                } else {
-                    g2d.setColor(c.getBackground());
-                }
-                
-                g2d.fillRoundRect(0, 0, c.getWidth(), c.getHeight(), 8, 8);
-                
-                FontMetrics fm = g2d.getFontMetrics();
-                Rectangle stringBounds = fm.getStringBounds(button.getText(), g2d).getBounds();
-                int textX = (c.getWidth() - stringBounds.width) / 2;
-                int textY = (c.getHeight() - stringBounds.height) / 2 + fm.getAscent();
-                
-                g2d.setColor(textColor);
-                g2d.drawString(button.getText(), textX, textY);
-            }
-        });
-    }
-    
-    private void styleEnhancedTextField(JTextField textField, String placeholder) {
-        textField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        textField.setBorder(BorderFactory.createCompoundBorder(
-            new LineBorder(new Color(220, 220, 220), 1, true),
-            new EmptyBorder(12, 15, 12, 15)
-        ));
-        textField.setBackground(Color.WHITE);
-        textField.setForeground(TEXT_PRIMARY);
-        
-        // Placeholder text
-        textField.setText(placeholder);
-        textField.setForeground(TEXT_SECONDARY);
-        
-        textField.addFocusListener(new java.awt.event.FocusAdapter() {
-            @Override
-            public void focusGained(java.awt.event.FocusEvent evt) {
-                if (textField.getText().equals(placeholder)) {
-                    textField.setText("");
-                    textField.setForeground(TEXT_PRIMARY);
-                }
-                textField.setBorder(BorderFactory.createCompoundBorder(
-                    new LineBorder(PRIMARY_COLOR, 2, true),
-                    new EmptyBorder(11, 14, 11, 14)
-                ));
-            }
-            
-            @Override
-            public void focusLost(java.awt.event.FocusEvent evt) {
-                if (textField.getText().isEmpty()) {
-                    textField.setText(placeholder);
-                    textField.setForeground(TEXT_SECONDARY);
-                }
-                textField.setBorder(BorderFactory.createCompoundBorder(
-                    new LineBorder(new Color(220, 220, 220), 1, true),
-                    new EmptyBorder(12, 15, 12, 15)
-                ));
-            }
-        });
-    }
-    
-    private void styleEnhancedLabel(JLabel label) {
-        label.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        label.setForeground(TEXT_PRIMARY);
-        label.setAlignmentX(Component.LEFT_ALIGNMENT);
-    }
-    
-    // Métodos de manejo de eventos
-    private void setupEventHandlers() {
-        // Configurar eventos de botones y otros componentes
-        btnBuscar.addActionListener(e -> buscarLibros());
-        btnSolicitarPrestamo.addActionListener(e -> solicitarPrestamo());
-        btnDevolver.addActionListener(e -> devolverLibro());
-        btnExportCatalogo.addActionListener(e -> exportarCatalogoExcel());
-        btnExportCatalogoPDF.addActionListener(e -> exportarCatalogoPDF());
-        btnExportHistorial.addActionListener(e -> exportarHistorialExcel());
-        btnExportHistorialPDF.addActionListener(e -> exportarHistorialPDF());
-        btnGuardarPerfil.addActionListener(e -> guardarPerfil());
-        
-        // Enter key para búsqueda
-        txtBuscar.addActionListener(e -> buscarLibros());
-    }
-    
-    private void loadInitialData() {
-        cargarCatalogo();
-        cargarMisPrestamos();
-        cargarHistorial();
-        cargarDatosUsuario();
-    }
-    
-    // Métodos de funcionalidad
-    private void buscarLibros() {
-        try {
-            String termino = txtBuscar.getText().trim();
-            if (termino.isEmpty() || termino.equals("Ingrese título, autor o ISBN...")) {
-                cargarCatalogo();
-                return;
-            }
-            
-            List<Libro> libros = libroDAO.buscarLibros(termino);
-            actualizarTablaCatalogo(libros);
-        } catch (SQLException e) {
-            mostrarError("Error al buscar libros: " + e.getMessage());
-        }
-    }
-    
-    private void cargarCatalogo() {
-        try {
-            List<Libro> libros = libroDAO.obtenerTodosLosLibros();
-            actualizarTablaCatalogo(libros);
-        } catch (SQLException e) {
-            mostrarError("Error al cargar catálogo: " + e.getMessage());
-        }
-    }
-    
-    private void actualizarTablaCatalogo(List<Libro> libros) {
-        DefaultTableModel model = (DefaultTableModel) tblCatalogo.getModel();
-        model.setRowCount(0);
-        
-        for (Libro libro : libros) {
-            model.addRow(new Object[]{
-                libro.getTitulo(),
-                libro.getAutor(),
-                libro.getAnioPublicacion(),
-                libro.isDisponible() ? "✅ Disponible" : "❌ No disponible"
-            });
-        }
-    }
-    
-    private void cargarMisPrestamos() {
-        try {
-            List<Prestamo> prestamos = prestamoDAO.obtenerPrestamosPorUsuario(codigoUser);
-            actualizarTablaPrestamos(prestamos);
-        } catch (SQLException e) {
-            mostrarError("Error al cargar préstamos: " + e.getMessage());
-        }
-    }
-    
-    private void actualizarTablaPrestamos(List<Prestamo> prestamos) {
-        DefaultTableModel model = (DefaultTableModel) tblMisPrestamos.getModel();
-        model.setRowCount(0);
-        
-        for (Prestamo prestamo : prestamos) {
-            model.addRow(new Object[]{
-                prestamo.getId(),
-                prestamo.getLibro().getTitulo(),
-                prestamo.getFechaPrestamo(),
-                calcularDiasRestantes(prestamo.getFechaPrestamo())
-            });
-        }
-    }
-    
-    private void cargarHistorial() {
-        try {
-            List<Prestamo> historial = prestamoDAO.obtenerHistorialPorUsuario(codigoUser);
-            actualizarTablaHistorial(historial);
-        } catch (SQLException e) {
-            mostrarError("Error al cargar historial: " + e.getMessage());
-        }
-    }
-    
-    private void actualizarTablaHistorial(List<Prestamo> historial) {
-        DefaultTableModel model = (DefaultTableModel) tblHistorial.getModel();
-        model.setRowCount(0);
-        
-        for (Prestamo prestamo : historial) {
-            model.addRow(new Object[]{
-                prestamo.getId(),
-                prestamo.getLibro().getTitulo(),
-                prestamo.getFechaPrestamo(),
-                prestamo.getFechaDevolucion(),
-                prestamo.getMulta() > 0 ? "$" + prestamo.getMulta() : "$0.00",
-                prestamo.getEstado()
-            });
-        }
-    }
-    
-    private void cargarDatosUsuario() {
-        try {
-            UsuarioDAO usuarioDAO = new UsuarioDAO();
-            Usuario usuario = usuarioDAO.obtenerUsuarioPorCodigo(codigoUser);
-            
-            if (usuario != null) {
-                txtNombre.setText(usuario.getNombre());
-                txtNombre.setForeground(TEXT_PRIMARY);
-                txtEmail.setText(usuario.getEmail());
-                txtEmail.setForeground(TEXT_PRIMARY);
-                txtTelefono.setText(usuario.getTelefono());
-                txtTelefono.setForeground(TEXT_PRIMARY);
-            }
-        } catch (SQLException e) {
-            mostrarError("Error al cargar datos del usuario: " + e.getMessage());
-        }
-    }
-    
-    private void solicitarPrestamo() {
-        int selectedRow = tblCatalogo.getSelectedRow();
-        if (selectedRow == -1) {
-            mostrarAdvertencia("Por favor, seleccione un libro del catálogo.");
-            return;
-        }
-        
-        try {
-            String titulo = (String) tblCatalogo.getValueAt(selectedRow, 0);
-            Libro libro = libroDAO.obtenerLibroPorTitulo(titulo);
-            
-            if (libro != null && libro.isDisponible()) {
-                boolean exito = prestamoDAO.crearPrestamo(codigoUser, libro.getId());
-                if (exito) {
-                    mostrarExito("Préstamo solicitado exitosamente.");
-                    cargarCatalogo();
-                    cargarMisPrestamos();
-                } else {
-                    mostrarError("No se pudo procesar el préstamo.");
-                }
-            } else {
-                mostrarAdvertencia("El libro seleccionado no está disponible.");
-            }
-        } catch (SQLException e) {
-            mostrarError("Error al solicitar préstamo: " + e.getMessage());
-        }
-    }
-    
-    private void devolverLibro() {
-        int selectedRow = tblMisPrestamos.getSelectedRow();
-        if (selectedRow == -1) {
-            mostrarAdvertencia("Por favor, seleccione un préstamo para devolver.");
-            return;
-        }
-        
-        try {
-            int prestamoId = (Integer) tblMisPrestamos.getValueAt(selectedRow, 0);
-            boolean exito = prestamoDAO.devolverLibro(prestamoId);
-            
-            if (exito) {
-                mostrarExito("Libro devuelto exitosamente.");
-                cargarCatalogo();
-                cargarMisPrestamos();
-                cargarHistorial();
-            } else {
-                mostrarError("No se pudo procesar la devolución.");
-            }
-        } catch (SQLException e) {
-            mostrarError("Error al devolver libro: " + e.getMessage());
-        }
-    }
-    
-    private void guardarPerfil() {
-        try {
-            String nombre = txtNombre.getText().trim();
-            String email = txtEmail.getText().trim();
-            String telefono = txtTelefono.getText().trim();
-            
-            if (nombre.isEmpty() || email.isEmpty() || telefono.isEmpty()) {
-                mostrarAdvertencia("Por favor, complete todos los campos.");
-                return;
-            }
-            
-            UsuarioDAO usuarioDAO = new UsuarioDAO();
-            Usuario usuario = new Usuario();
-            usuario.setCodigo(codigoUser);
-            usuario.setNombre(nombre);
-            usuario.setEmail(email);
-            usuario.setTelefono(telefono);
-            
-            boolean exito = usuarioDAO.actualizarUsuario(usuario);
-            if (exito) {
-                mostrarExito("Perfil actualizado exitosamente.");
-            } else {
-                mostrarError("No se pudo actualizar el perfil.");
-            }
-        } catch (SQLException e) {
-            mostrarError("Error al guardar perfil: " + e.getMessage());
-        }
-    }
-    
-    // Métodos de exportación
-    private void exportarCatalogoExcel() {
-        try {
-            List<Libro> libros = libroDAO.obtenerTodosLosLibros();
-            exportarExcel(libros, "Catalogo.xlsx", "Catálogo de Libros");
-            mostrarExito("Catálogo exportado exitosamente.");
-        } catch (Exception e) {
-            mostrarError("Error al exportar catálogo: " + e.getMessage());
-        }
-    }
-    
-    private void exportarCatalogoPDF() {
-        try {
-            List<Libro> libros = libroDAO.obtenerTodosLosLibros();
-            exportarPDF(libros, "Catalogo.pdf", "Catálogo de Libros");
-            mostrarExito("Catálogo PDF exportado exitosamente.");
-        } catch (Exception e) {
-            mostrarError("Error al exportar PDF: " + e.getMessage());
-        }
-    }
-    
-    private void exportarHistorialExcel() {
-        try {
-            List<Prestamo> historial = prestamoDAO.obtenerHistorialPorUsuario(codigoUser);
-            exportarHistorialExcel(historial, "Historial.xlsx");
-            mostrarExito("Historial exportado exitosamente.");
-        } catch (Exception e) {
-            mostrarError("Error al exportar historial: " + e.getMessage());
-        }
-    }
-    
-    private void exportarHistorialPDF() {
-        try {
-            List<Prestamo> historial = prestamoDAO.obtenerHistorialPorUsuario(codigoUser);
-            exportarHistorialPDF(historial, "Historial.pdf");
-            mostrarExito("Historial PDF exportado exitosamente.");
-        } catch (Exception e) {
-            mostrarError("Error al exportar PDF: " + e.getMessage());
-        }
-    }
-    
-    // Métodos auxiliares
-    private void exportarExcel(List<Libro> libros, String filename, String sheetName) throws Exception {
-        Workbook workbook = new XSSFWorkbook();
-        Sheet sheet = workbook.createSheet(sheetName);
-        
-        // Header
-        Row headerRow = sheet.createRow(0);
-        headerRow.createCell(0).setCellValue("Título");
-        headerRow.createCell(1).setCellValue("Autor");
-        headerRow.createCell(2).setCellValue("Año");
-        headerRow.createCell(3).setCellValue("Disponible");
-        
-        // Data
-        for (int i = 0; i < libros.size(); i++) {
-            Row row = sheet.createRow(i + 1);
-            Libro libro = libros.get(i);
-            row.createCell(0).setCellValue(libro.getTitulo());
-            row.createCell(1).setCellValue(libro.getAutor());
-            row.createCell(2).setCellValue(libro.getAnioPublicacion());
-            row.createCell(3).setCellValue(libro.isDisponible() ? "Sí" : "No");
-        }
-        
-        try (FileOutputStream fileOut = new FileOutputStream(filename)) {
-            workbook.write(fileOut);
-        }
-        workbook.close();
-    }
-    
-    private void exportarPDF(List<Libro> libros, String filename, String title) throws Exception {
-        PdfWriter writer = new PdfWriter(filename);
-        PdfDocument pdf = new PdfDocument(writer);
-        Document document = new Document(pdf);
-        
-        document.add(new Paragraph(title).setFontSize(18).setBold());
-        
-        Table table = new Table(4);
-        table.addHeaderCell(new Cell().add(new Paragraph("Título")));
-        table.addHeaderCell(new Cell().add(new Paragraph("Autor")));
-        table.addHeaderCell(new Cell().add(new Paragraph("Año")));
-        table.addHeaderCell(new Cell().add(new Paragraph("Disponible")));
-        
-        for (Libro libro : libros) {
-            table.addCell(new Cell().add(new Paragraph(libro.getTitulo())));
-            table.addCell(new Cell().add(new Paragraph(libro.getAutor())));
-            table.addCell(new Cell().add(new Paragraph(String.valueOf(libro.getAnioPublicacion()))));
-            table.addCell(new Cell().add(new Paragraph(libro.isDisponible() ? "Sí" : "No")));
-        }
-        
-        document.add(table);
-        document.close();
-    }
-    
-    private void exportarHistorialExcel(List<Prestamo> historial, String filename) throws Exception {
-        Workbook workbook = new XSSFWorkbook();
-        Sheet sheet = workbook.createSheet("Historial de Préstamos");
-        
-        // Header
-        Row headerRow = sheet.createRow(0);
-        headerRow.createCell(0).setCellValue("ID");
-        headerRow.createCell(1).setCellValue("Título");
-        headerRow.createCell(2).setCellValue("Fecha Préstamo");
-        headerRow.createCell(3).setCellValue("Fecha Devolución");
-        headerRow.createCell(4).setCellValue("Multa");
-        headerRow.createCell(5).setCellValue("Estado");
-        
-        // Data
-        for (int i = 0; i < historial.size(); i++) {
-            Row row = sheet.createRow(i + 1);
-            Prestamo prestamo = historial.get(i);
-            row.createCell(0).setCellValue(prestamo.getId());
-            row.createCell(1).setCellValue(prestamo.getLibro().getTitulo());
-            row.createCell(2).setCellValue(prestamo.getFechaPrestamo().toString());
-            row.createCell(3).setCellValue(prestamo.getFechaDevolucion() != null ? 
-                prestamo.getFechaDevolucion().toString() : "Pendiente");
-            row.createCell(4).setCellValue(prestamo.getMulta());
-            row.createCell(5).setCellValue(prestamo.getEstado());
-        }
-        
-        try (FileOutputStream fileOut = new FileOutputStream(filename)) {
-            workbook.write(fileOut);
-        }
-        workbook.close();
-    }
-    
-    private void exportarHistorialPDF(List<Prestamo> historial, String filename) throws Exception {
-        PdfWriter writer = new PdfWriter(filename);
-        PdfDocument pdf = new PdfDocument(writer);
-        Document document = new Document(pdf);
-        
-        document.add(new Paragraph("Historial de Préstamos").setFontSize(18).setBold());
-        
-        Table table = new Table(6);
-        table.addHeaderCell(new Cell().add(new Paragraph("ID")));
-        table.addHeaderCell(new Cell().add(new Paragraph("Título")));
-        table.addHeaderCell(new Cell().add(new Paragraph("F. Préstamo")));
-        table.addHeaderCell(new Cell().add(new Paragraph("F. Devolución")));
-        table.addHeaderCell(new Cell().add(new Paragraph("Multa")));
-        table.addHeaderCell(new Cell().add(new Paragraph("Estado")));
-        
-        for (Prestamo prestamo : historial) {
-            table.addCell(new Cell().add(new Paragraph(String.valueOf(prestamo.getId()))));
-            table.addCell(new Cell().add(new Paragraph(prestamo.getLibro().getTitulo())));
-            table.addCell(new Cell().add(new Paragraph(prestamo.getFechaPrestamo().toString())));
-            table.addCell(new Cell().add(new Paragraph(
-                prestamo.getFechaDevolucion() != null ? 
-                prestamo.getFechaDevolucion().toString() : "Pendiente")));
-            table.addCell(new Cell().add(new Paragraph(String.valueOf(prestamo.getMulta()))));
-            table.addCell(new Cell().add(new Paragraph(prestamo.getEstado())));
-        }
-        
-        document.add(table);
-        document.close();
-    }
-    
-    private String calcularDiasRestantes(java.sql.Date fechaPrestamo) {
-        long diffInMillies = System.currentTimeMillis() - fechaPrestamo.getTime();
-        long diffInDays = diffInMillies / (24 * 60 * 60 * 1000);
-        long diasRestantes = 15 - diffInDays; // Asumiendo 15 días de préstamo
-        
-        if (diasRestantes > 0) {
-            return diasRestantes + " días";
-        } else {
-            return "⚠️ Vencido (" + Math.abs(diasRestantes) + " días)";
-        }
-    }
-    
-    // Métodos de notificación
-    private void mostrarExito(String mensaje) {
-        JOptionPane.showMessageDialog(this, mensaje, "Éxito", JOptionPane.INFORMATION_MESSAGE);
-    }
-    
-    private void mostrarError(String mensaje) {
-        JOptionPane.showMessageDialog(this, mensaje, "Error", JOptionPane.ERROR_MESSAGE);
-    }
-    
-    private void mostrarAdvertencia(String mensaje) {
-        JOptionPane.showMessageDialog(this, mensaje, "Advertencia", JOptionPane.WARNING_MESSAGE);
-    }
-}d(scrollPrestamos, BorderLayout.CENTER);
+        cardPanel.add(scrollPrestamos, BorderLayout.CENTER);
         cardPanel.add(buttonPanel, BorderLayout.SOUTH);
         
         panelMisPrestamos.add(cardPanel, BorderLayout.CENTER);
     }
     
-    private void createEnhancedHistorialPanel() {
+    /**
+     * Crea el panel del historial de préstamos.
+     */
+    private void createHistorialPanel() {
         panelHistorial = new JPanel(new BorderLayout());
         panelHistorial.setBackground(BACKGROUND_COLOR);
         panelHistorial.setBorder(new EmptyBorder(25, 25, 25, 25));
         
-        // Card container
         JPanel cardPanel = createCardPanel();
         cardPanel.setLayout(new BorderLayout());
         
-        // Header mejorado
+        // Header
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
         headerPanel.setBorder(new EmptyBorder(0, 0, 20, 0));
@@ -1051,7 +541,7 @@ public class MainView extends JFrame {
         headerPanel.add(titleLabel, BorderLayout.WEST);
         headerPanel.add(statsPanel, BorderLayout.EAST);
         
-        // Tabla mejorada
+        // Tabla
         tblHistorial = new JTable(new DefaultTableModel(
                 new Object[][]{},
                 new String[]{"🆔 ID", "📖 Título", "📅 F. Préstamo", "📅 F. Devolución", "💰 Multa", "📊 Estado"}
@@ -1061,7 +551,7 @@ public class MainView extends JFrame {
         JScrollPane scrollHistorial = new JScrollPane(tblHistorial);
         styleEnhancedScrollPane(scrollHistorial);
         
-        // Panel de botones mejorado
+        // Panel de botones
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 15));
         buttonPanel.setOpaque(false);
         
@@ -1085,12 +575,14 @@ public class MainView extends JFrame {
         panelHistorial.add(cardPanel, BorderLayout.CENTER);
     }
     
-    private void createEnhancedPerfilPanel() {
+    /**
+     * Crea el panel del perfil de usuario.
+     */
+    private void createPerfilPanel() {
         panelPerfil = new JPanel(new BorderLayout());
         panelPerfil.setBackground(BACKGROUND_COLOR);
         panelPerfil.setBorder(new EmptyBorder(25, 25, 25, 25));
         
-        // Card container
         JPanel cardPanel = createCardPanel();
         cardPanel.setLayout(new BorderLayout());
         
@@ -1115,13 +607,24 @@ public class MainView extends JFrame {
         
         headerPanel.add(titlePanel, BorderLayout.WEST);
         
-        // Formulario mejorado
+        // Formulario
+        JPanel formPanel = createPerfilFormPanel();
+        
+        cardPanel.add(headerPanel, BorderLayout.NORTH);
+        cardPanel.add(formPanel, BorderLayout.CENTER);
+        
+        panelPerfil.add(cardPanel, BorderLayout.CENTER);
+    }
+    
+    /**
+     * Crea el formulario del perfil de usuario.
+     */
+    private JPanel createPerfilFormPanel() {
         JPanel formPanel = new JPanel();
         formPanel.setOpaque(false);
         formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
-        formPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
         
-        // Avatar placeholder
+        // Avatar
         JPanel avatarPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         avatarPanel.setOpaque(false);
         avatarPanel.setBorder(new EmptyBorder(0, 0, 20, 0));
@@ -1185,6 +688,685 @@ public class MainView extends JFrame {
         formPanel.add(fieldsPanel);
         formPanel.add(Box.createVerticalGlue());
         
-        cardPanel.add(headerPanel, BorderLayout.NORTH);
-        cardPanel.ad
+        return formPanel;
     }
+    
+    // ==================== MÉTODOS DE ESTILIZACIÓN ====================
+    
+    /**
+     * Crea un panel con estilo de tarjeta (card).
+     */
+    private JPanel createCardPanel() {
+        JPanel cardPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Sombra del card
+                g2d.setColor(new Color(0, 0, 0, 10));
+                g2d.fillRoundRect(3, 3, getWidth() - 3, getHeight() - 3, 15, 15);
+                
+                // Card principal
+                g2d.setColor(CARD_COLOR);
+                g2d.fillRoundRect(0, 0, getWidth() - 3, getHeight() - 3, 15, 15);
+                
+                // Borde sutil
+                g2d.setColor(new Color(0, 0, 0, 20));
+                g2d.drawRoundRect(0, 0, getWidth() - 4, getHeight() - 4, 15, 15);
+            }
+        };
+        cardPanel.setBorder(new EmptyBorder(25, 30, 25, 30));
+        return cardPanel;
+    }
+    
+    /**
+     * Aplica estilo moderno a las tablas.
+     */
+    private void styleEnhancedTable(JTable table) {
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        table.setRowHeight(45);
+        table.setGridColor(new Color(240, 240, 240));
+        table.setSelectionBackground(new Color(PRIMARY_COLOR.getRed(), PRIMARY_COLOR.getGreen(), PRIMARY_COLOR.getBlue(), 30));
+        table.setSelectionForeground(TEXT_PRIMARY);
+        table.setShowVerticalLines(false);
+        table.setIntercellSpacing(new Dimension(0, 1));
+        
+        // Header personalizado
+        JTableHeader header = table.getTableHeader();
+        header.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        header.setBackground(PRIMARY_COLOR);
+        header.setForeground(Color.WHITE);
+        header.setPreferredSize(new Dimension(0, 50));
+        header.setBorder(BorderFactory.createEmptyBorder());
+        
+        // Renderer personalizado para celdas
+        DefaultTableCellRenderer cellRenderer = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, 
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                
+                if (!isSelected) {
+                    c.setBackground(row % 2 == 0 ? Color.WHITE : new Color(248, 249, 250));
+                }
+                
+                setBorder(new EmptyBorder(10, 15, 10, 15));
+                return c;
+            }
+        };
+        
+        for (int i = 0; i < table.getColumnCount(); i++) {
+            table.getColumnModel().getColumn(i).setCellRenderer(cellRenderer);
+        }
+    }
+    
+    /**
+     * Aplica estilo moderno a los scroll panes.
+     */
+    private void styleEnhancedScrollPane(JScrollPane scrollPane) {
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.getViewport().setBackground(Color.WHITE);
+        scrollPane.setBackground(Color.WHITE);
+        
+        // Personalizar scrollbars
+        scrollPane.getVerticalScrollBar().setUI(new javax.swing.plaf.basic.BasicScrollBarUI() {
+            @Override
+            protected void configureScrollBarColors() {
+                this.thumbColor = new Color(200, 200, 200);
+                this.trackColor = new Color(245, 245, 245);
+            }
+            
+            @Override
+            protected JButton createDecreaseButton(int orientation) {
+                return createZeroButton();
+            }
+            
+            @Override
+            protected JButton createIncreaseButton(int orientation) {
+                return createZeroButton();
+            }
+            
+            private JButton createZeroButton() {
+                JButton button = new JButton();
+                button.setPreferredSize(new Dimension(0, 0));
+                button.setMinimumSize(new Dimension(0, 0));
+                button.setMaximumSize(new Dimension(0, 0));
+                return button;
+            }
+        });
+    }
+    
+    /**
+     * Aplica estilo moderno a los botones.
+     */
+    private void styleEnhancedButton(JButton button, Color bgColor, Color textColor, boolean isPrimary) {
+        button.setFont(new Font("Segoe UI", isPrimary ? Font.BOLD : Font.PLAIN, 13));
+        button.setBackground(bgColor);
+        button.setForeground(textColor);
+        button.setBorder(BorderFactory.createEmptyBorder(12, 25, 12, 25));
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        // Efectos hover
+        button.addMouseListener(new MouseAdapter() {
+            Color originalColor = bgColor;
+            
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                button.setBackground(originalColor.darker());
+            }
+            
+            @Override
+            public void mouseExited(MouseEvent e) {
+                button.setBackground(originalColor);
+            }
+        });
+        
+        // Bordes redondeados
+        button.setUI(new javax.swing.plaf.basic.BasicButtonUI() {
+            @Override
+            public void paint(Graphics g, JComponent c) {
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                if (c.getModel().isPressed()) {
+                    g2d.setColor(bgColor.darker().darker());
+                } else {
+                    g2d.setColor(c.getBackground());
+                }
+                
+                g2d.fillRoundRect(0, 0, c.getWidth(), c.getHeight(), 8, 8);
+                
+                FontMetrics fm = g2d.getFontMetrics();
+                Rectangle stringBounds = fm.getStringBounds(button.getText(), g2d).getBounds();
+                int textX = (c.getWidth() - stringBounds.width) / 2;
+                int textY = (c.getHeight() - stringBounds.height) / 2 + fm.getAscent();
+                
+                g2d.setColor(textColor);
+                g2d.drawString(button.getText(), textX, textY);
+            }
+        });
+    }
+    
+    /**
+     * Aplica estilo moderno a los campos de texto.
+     */
+    private void styleEnhancedTextField(JTextField textField, String placeholder) {
+        textField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        textField.setBorder(BorderFactory.createCompoundBorder(
+            new LineBorder(new Color(220, 220, 220), 1, true),
+            new EmptyBorder(12, 15, 12, 15)
+        ));
+        textField.setBackground(Color.WHITE);
+        textField.setForeground(TEXT_PRIMARY);
+        
+        // Placeholder text
+        textField.setText(placeholder);
+        textField.setForeground(TEXT_SECONDARY);
+        
+        textField.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                if (textField.getText().equals(placeholder)) {
+                    textField.setText("");
+                    textField.setForeground(TEXT_PRIMARY);
+                }
+                textField.setBorder(BorderFactory.createCompoundBorder(
+                    new LineBorder(PRIMARY_COLOR, 2, true),
+                    new EmptyBorder(11, 14, 11, 14)
+                ));
+            }
+            
+            @Override
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                if (textField.getText().isEmpty()) {
+                    textField.setText(placeholder);
+                    textField.setForeground(TEXT_SECONDARY);
+                }
+                textField.setBorder(BorderFactory.createCompoundBorder(
+                    new LineBorder(new Color(220, 220, 220), 1, true),
+                    new EmptyBorder(12, 15, 12, 15)
+                ));
+            }
+        });
+    }
+    
+    /**
+     * Aplica estilo a las etiquetas.
+     */
+    private void styleEnhancedLabel(JLabel label) {
+        label.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        label.setForeground(TEXT_PRIMARY);
+        label.setAlignmentX(Component.LEFT_ALIGNMENT);
+    }
+    
+    // ==================== MANEJO DE EVENTOS ====================
+    
+    /**
+     * Configura todos los manejadores de eventos.
+     */
+    private void setupEventHandlers() {
+        btnBuscar.addActionListener(e -> buscarLibros());
+        btnSolicitarPrestamo.addActionListener(e -> solicitarPrestamo());
+        btnDevolver.addActionListener(e -> devolverLibro());
+        btnExportCatalogo.addActionListener(e -> exportarCatalogoExcel());
+        btnExportCatalogoPDF.addActionListener(e -> exportarCatalogoPDF());
+        btnExportHistorial.addActionListener(e -> exportarHistorialExcel());
+        btnExportHistorialPDF.addActionListener(e -> exportarHistorialPDF());
+        btnGuardarPerfil.addActionListener(e -> guardarPerfil());
+        
+        // Enter key para búsqueda
+        txtBuscar.addActionListener(e -> buscarLibros());
+    }
+    
+    /**
+     * Carga los datos iniciales de la aplicación.
+     */
+    private void loadInitialData() {
+        cargarCatalogo();
+        cargarMisPrestamos();
+        cargarHistorial();
+        cargarDatosUsuario();
+    }
+    
+    // ==================== FUNCIONALIDADES PRINCIPALES ====================
+    
+    /**
+     * Busca libros en el catálogo.
+     */
+    private void buscarLibros() {
+        try {
+            String termino = txtBuscar.getText().trim();
+            if (termino.isEmpty() || termino.equals("Ingrese título, autor o ISBN...")) {
+                cargarCatalogo();
+                return;
+            }
+            
+            List<Libro> libros = libroDAO.buscarLibros(termino);
+            actualizarTablaCatalogo(libros);
+        } catch (SQLException e) {
+            mostrarError("Error al buscar libros: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Carga todos los libros del catálogo.
+     */
+    private void cargarCatalogo() {
+        try {
+            List<Libro> libros = libroDAO.obtenerTodosLosLibros();
+            actualizarTablaCatalogo(libros);
+        } catch (SQLException e) {
+            mostrarError("Error al cargar catálogo: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Actualiza la tabla del catálogo con la lista de libros.
+     */
+    private void actualizarTablaCatalogo(List<Libro> libros) {
+        DefaultTableModel model = (DefaultTableModel) tblCatalogo.getModel();
+        model.setRowCount(0);
+        
+        for (Libro libro : libros) {
+            model.addRow(new Object[]{
+                libro.getTitulo(),
+                libro.getAutor(),
+                libro.getAnioPublicacion(),
+                libro.isDisponible() ? "✅ Disponible" : "❌ No disponible"
+            });
+        }
+    }
+    
+    /**
+     * Carga los préstamos activos del usuario.
+     */
+    private void cargarMisPrestamos() {
+        try {
+            List<Prestamo> prestamos = prestamoDAO.obtenerPrestamosPorUsuario(codigoUser);
+            actualizarTablaPrestamos(prestamos);
+        } catch (SQLException e) {
+            mostrarError("Error al cargar préstamos: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Actualiza la tabla de préstamos.
+     */
+    private void actualizarTablaPrestamos(List<Prestamo> prestamos) {
+        DefaultTableModel model = (DefaultTableModel) tblMisPrestamos.getModel();
+        model.setRowCount(0);
+        
+        for (Prestamo prestamo : prestamos) {
+            model.addRow(new Object[]{
+                prestamo.getId(),
+                prestamo.getLibro().getTitulo(),
+                prestamo.getFechaPrestamo(),
+                calcularDiasRestantes(prestamo.getFechaPrestamo())
+            });
+        }
+    }
+    
+    /**
+     * Carga el historial de préstamos del usuario.
+     */
+    private void cargarHistorial() {
+        try {
+            List<Prestamo> historial = prestamoDAO.obtenerHistorialPorUsuario(codigoUser);
+            actualizarTablaHistorial(historial);
+        } catch (SQLException e) {
+            mostrarError("Error al cargar historial: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Actualiza la tabla del historial.
+     */
+    private void actualizarTablaHistorial(List<Prestamo> historial) {
+        DefaultTableModel model = (DefaultTableModel) tblHistorial.getModel();
+        model.setRowCount(0);
+        
+        for (Prestamo prestamo : historial) {
+            model.addRow(new Object[]{
+                prestamo.getId(),
+                prestamo.getLibro().getTitulo(),
+                prestamo.getFechaPrestamo(),
+                prestamo.getFechaDevolucion(),
+                prestamo.getMulta() > 0 ? "$" + prestamo.getMulta() : "$0.00",
+                prestamo.getEstado()
+            });
+        }
+    }
+    
+    /**
+     * Carga los datos del usuario en el perfil.
+     */
+    private void cargarDatosUsuario() {
+        try {
+            UsuarioDAO usuarioDAO = new UsuarioDAO();
+            Usuario usuario = usuarioDAO.obtenerUsuarioPorCodigo(codigoUser);
+            
+            if (usuario != null) {
+                txtNombre.setText(usuario.getNombre());
+                txtNombre.setForeground(TEXT_PRIMARY);
+                txtEmail.setText(usuario.getEmail());
+                txtEmail.setForeground(TEXT_PRIMARY);
+                txtTelefono.setText(usuario.getTelefono());
+                txtTelefono.setForeground(TEXT_PRIMARY);
+            }
+        } catch (SQLException e) {
+            mostrarError("Error al cargar datos del usuario: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Solicita un préstamo del libro seleccionado.
+     */
+    private void solicitarPrestamo() {
+        int selectedRow = tblCatalogo.getSelectedRow();
+        if (selectedRow == -1) {
+            mostrarAdvertencia("Por favor, seleccione un libro del catálogo.");
+            return;
+        }
+        
+        try {
+            String titulo = (String) tblCatalogo.getValueAt(selectedRow, 0);
+            Libro libro = libroDAO.obtenerLibroPorTitulo(titulo);
+            
+            if (libro != null && libro.isDisponible()) {
+                boolean exito = prestamoDAO.crearPrestamo(codigoUser, libro.getId());
+                if (exito) {
+                    mostrarExito("Préstamo solicitado exitosamente.");
+                    cargarCatalogo();
+                    cargarMisPrestamos();
+                } else {
+                    mostrarError("No se pudo procesar el préstamo.");
+                }
+            } else {
+                mostrarAdvertencia("El libro seleccionado no está disponible.");
+            }
+        } catch (SQLException e) {
+            mostrarError("Error al solicitar préstamo: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Devuelve un libro prestado.
+     */
+    private void devolverLibro() {
+        int selectedRow = tblMisPrestamos.getSelectedRow();
+        if (selectedRow == -1) {
+            mostrarAdvertencia("Por favor, seleccione un préstamo para devolver.");
+            return;
+        }
+        
+        try {
+            int prestamoId = (Integer) tblMisPrestamos.getValueAt(selectedRow, 0);
+            boolean exito = prestamoDAO.devolverLibro(prestamoId);
+            
+            if (exito) {
+                mostrarExito("Libro devuelto exitosamente.");
+                cargarCatalogo();
+                cargarMisPrestamos();
+                cargarHistorial();
+            } else {
+                mostrarError("No se pudo procesar la devolución.");
+            }
+        } catch (SQLException e) {
+            mostrarError("Error al devolver libro: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Guarda los cambios del perfil de usuario.
+     */
+    private void guardarPerfil() {
+        try {
+            String nombre = txtNombre.getText().trim();
+            String email = txtEmail.getText().trim();
+            String telefono = txtTelefono.getText().trim();
+            
+            if (nombre.isEmpty() || email.isEmpty() || telefono.isEmpty()) {
+                mostrarAdvertencia("Por favor, complete todos los campos.");
+                return;
+            }
+            
+            UsuarioDAO usuarioDAO = new UsuarioDAO();
+            Usuario usuario = new Usuario();
+            usuario.setCodigo(codigoUser);
+            usuario.setNombre(nombre);
+            usuario.setEmail(email);
+            usuario.setTelefono(telefono);
+            
+            boolean exito = usuarioDAO.actualizarUsuario(usuario);
+            if (exito) {
+                mostrarExito("Perfil actualizado exitosamente.");
+            } else {
+                mostrarError("No se pudo actualizar el perfil.");
+            }
+        } catch (SQLException e) {
+            mostrarError("Error al guardar perfil: " + e.getMessage());
+        }
+    }
+    
+    // ==================== MÉTODOS DE EXPORTACIÓN ====================
+    
+    /**
+     * Exporta el catálogo a Excel.
+     */
+    private void exportarCatalogoExcel() {
+        try {
+            List<Libro> libros = libroDAO.obtenerTodosLosLibros();
+            exportarExcel(libros, "Catalogo.xlsx", "Catálogo de Libros");
+            mostrarExito("Catálogo exportado exitosamente.");
+        } catch (Exception e) {
+            mostrarError("Error al exportar catálogo: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Exporta el catálogo a PDF.
+     */
+    private void exportarCatalogoPDF() {
+        try {
+            List<Libro> libros = libroDAO.obtenerTodosLosLibros();
+            exportarPDF(libros, "Catalogo.pdf", "Catálogo de Libros");
+            mostrarExito("Catálogo PDF exportado exitosamente.");
+        } catch (Exception e) {
+            mostrarError("Error al exportar PDF: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Exporta el historial a Excel.
+     */
+    private void exportarHistorialExcel() {
+        try {
+            List<Prestamo> historial = prestamoDAO.obtenerHistorialPorUsuario(codigoUser);
+            exportarHistorialExcel(historial, "Historial.xlsx");
+            mostrarExito("Historial exportado exitosamente.");
+        } catch (Exception e) {
+            mostrarError("Error al exportar historial: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Exporta el historial a PDF.
+     */
+    private void exportarHistorialPDF() {
+        try {
+            List<Prestamo> historial = prestamoDAO.obtenerHistorialPorUsuario(codigoUser);
+            exportarHistorialPDF(historial, "Historial.pdf");
+            mostrarExito("Historial PDF exportado exitosamente.");
+        } catch (Exception e) {
+            mostrarError("Error al exportar PDF: " + e.getMessage());
+        }
+    }
+    
+    // ==================== MÉTODOS AUXILIARES ====================
+    
+    /**
+     * Exporta una lista de libros a Excel.
+     */
+    private void exportarExcel(List<Libro> libros, String filename, String sheetName) throws Exception {
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet(sheetName);
+        
+        // Header
+        Row headerRow = sheet.createRow(0);
+        headerRow.createCell(0).setCellValue("Título");
+        headerRow.createCell(1).setCellValue("Autor");
+        headerRow.createCell(2).setCellValue("Año");
+        headerRow.createCell(3).setCellValue("Disponible");
+        
+        // Data
+        for (int i = 0; i < libros.size(); i++) {
+            Row row = sheet.createRow(i + 1);
+            Libro libro = libros.get(i);
+            row.createCell(0).setCellValue(libro.getTitulo());
+            row.createCell(1).setCellValue(libro.getAutor());
+            row.createCell(2).setCellValue(libro.getAnioPublicacion());
+            row.createCell(3).setCellValue(libro.isDisponible() ? "Sí" : "No");
+        }
+        
+        try (FileOutputStream fileOut = new FileOutputStream(filename)) {
+            workbook.write(fileOut);
+        }
+        workbook.close();
+    }
+    
+    /**
+     * Exporta una lista de libros a PDF.
+     */
+    private void exportarPDF(List<Libro> libros, String filename, String title) throws Exception {
+        PdfWriter writer = new PdfWriter(filename);
+        PdfDocument pdf = new PdfDocument(writer);
+        Document document = new Document(pdf);
+        
+        document.add(new Paragraph(title).setFontSize(18).setBold());
+        
+        Table table = new Table(4);
+        table.addHeaderCell(new Cell().add(new Paragraph("Título")));
+        table.addHeaderCell(new Cell().add(new Paragraph("Autor")));
+        table.addHeaderCell(new Cell().add(new Paragraph("Año")));
+        table.addHeaderCell(new Cell().add(new Paragraph("Disponible")));
+        
+        for (Libro libro : libros) {
+             table.addCell(new Cell().add(new Paragraph(libro.getTitulo())));
+             table.addCell(new Cell().add(new Paragraph(libro.getAutor())));
+             table.addCell(new Cell().add(new Paragraph(String.valueOf(libro.getAnioPublicacion()))));
+             table.addCell(new Cell().add(new Paragraph(libro.isDisponible() ? "Sí" : "No")));
+         }
+         
+         document.add(table);
+         document.close();
+     }
+     
+     /**
+      * Exporta el historial a Excel.
+      */
+     private void exportarHistorialExcel(List<Prestamo> historial, String filename) throws Exception {
+         Workbook workbook = new XSSFWorkbook();
+         Sheet sheet = workbook.createSheet("Historial de Préstamos");
+         
+         // Header
+         Row headerRow = sheet.createRow(0);
+         headerRow.createCell(0).setCellValue("ID");
+         headerRow.createCell(1).setCellValue("Título");
+         headerRow.createCell(2).setCellValue("Fecha Préstamo");
+         headerRow.createCell(3).setCellValue("Fecha Devolución");
+         headerRow.createCell(4).setCellValue("Multa");
+         headerRow.createCell(5).setCellValue("Estado");
+         
+         // Data
+         for (int i = 0; i < historial.size(); i++) {
+             Row row = sheet.createRow(i + 1);
+             Prestamo prestamo = historial.get(i);
+             row.createCell(0).setCellValue(prestamo.getId());
+             row.createCell(1).setCellValue(prestamo.getLibro().getTitulo());
+             row.createCell(2).setCellValue(prestamo.getFechaPrestamo().toString());
+             row.createCell(3).setCellValue(prestamo.getFechaDevolucion() != null ? 
+                 prestamo.getFechaDevolucion().toString() : "Pendiente");
+             row.createCell(4).setCellValue(prestamo.getMulta());
+             row.createCell(5).setCellValue(prestamo.getEstado());
+         }
+         
+         try (FileOutputStream fileOut = new FileOutputStream(filename)) {
+             workbook.write(fileOut);
+         }
+         workbook.close();
+     }
+     
+     /**
+      * Exporta el historial a PDF.
+      */
+     private void exportarHistorialPDF(List<Prestamo> historial, String filename) throws Exception {
+         PdfWriter writer = new PdfWriter(filename);
+         PdfDocument pdf = new PdfDocument(writer);
+         Document document = new Document(pdf);
+         
+         document.add(new Paragraph("Historial de Préstamos").setFontSize(18).setBold());
+         
+         Table table = new Table(6);
+         table.addHeaderCell(new Cell().add(new Paragraph("ID")));
+         table.addHeaderCell(new Cell().add(new Paragraph("Título")));
+         table.addHeaderCell(new Cell().add(new Paragraph("F. Préstamo")));
+         table.addHeaderCell(new Cell().add(new Paragraph("F. Devolución")));
+         table.addHeaderCell(new Cell().add(new Paragraph("Multa")));
+         table.addHeaderCell(new Cell().add(new Paragraph("Estado")));
+         
+         for (Prestamo prestamo : historial) {
+             table.addCell(new Cell().add(new Paragraph(String.valueOf(prestamo.getId()))));
+             table.addCell(new Cell().add(new Paragraph(prestamo.getLibro().getTitulo())));
+             table.addCell(new Cell().add(new Paragraph(prestamo.getFechaPrestamo().toString())));
+             table.addCell(new Cell().add(new Paragraph(
+                 prestamo.getFechaDevolucion() != null ? 
+                 prestamo.getFechaDevolucion().toString() : "Pendiente")));
+             table.addCell(new Cell().add(new Paragraph(String.valueOf(prestamo.getMulta()))));
+             table.addCell(new Cell().add(new Paragraph(prestamo.getEstado())));
+         }
+         
+         document.add(table);
+         document.close();
+     }
+     
+     /**
+      * Calcula los días restantes de un préstamo.
+      */
+     private String calcularDiasRestantes(java.sql.Date fechaPrestamo) {
+         long diffInMillies = System.currentTimeMillis() - fechaPrestamo.getTime();
+         long diffInDays = diffInMillies / (24 * 60 * 60 * 1000);
+         long diasRestantes = 15 - diffInDays; // Asumiendo 15 días de préstamo
+         
+         if (diasRestantes > 0) {
+             return diasRestantes + " días";
+         } else {
+             return "⚠️ Vencido (" + Math.abs(diasRestantes) + " días)";
+         }
+     }
+     
+     // ==================== MÉTODOS DE NOTIFICACIÓN ====================
+     
+     /**
+      * Muestra un mensaje de éxito.
+      */
+     private void mostrarExito(String mensaje) {
+         JOptionPane.showMessageDialog(this, mensaje, "✅ Éxito", JOptionPane.INFORMATION_MESSAGE);
+     }
+     
+     /**
+      * Muestra un mensaje de error.
+      */
+     private void mostrarError(String mensaje) {
+         JOptionPane.showMessageDialog(this, mensaje, "❌ Error", JOptionPane.ERROR_MESSAGE);
+     }
+     
+     /**
+      * Muestra un mensaje de advertencia.
+      */
+     private void mostrarAdvertencia(String mensaje) {
+         JOptionPane.showMessageDialog(this, mensaje, "⚠️ Advertencia", JOptionPane.WARNING_MESSAGE);
+     }
+ }
