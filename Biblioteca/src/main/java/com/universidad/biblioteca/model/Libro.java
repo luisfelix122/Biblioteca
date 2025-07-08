@@ -1,37 +1,29 @@
 package com.universidad.biblioteca.model;
 
 public class Libro {
-
-    private String isbn;
+    private int id;
     private String titulo;
     private String autor;
-    private String categoria;
-    private String editorial;
     private int anioPublicacion;
-    private int totalEjemplares;
-    private int disponibles;
+    private boolean disponible;
 
     public Libro() {
     }
 
-    public Libro(String isbn, String titulo, String autor, String categoria,
-            String editorial, int anioPublicacion, int totalEjemplares, int disponibles) {
-        this.isbn = isbn;
+    public Libro(int id, String titulo, String autor, int anioPublicacion, boolean disponible) {
+        this.id = id;
         this.titulo = titulo;
         this.autor = autor;
-        this.categoria = categoria;
-        this.editorial = editorial;
         this.anioPublicacion = anioPublicacion;
-        this.totalEjemplares = totalEjemplares;
-        this.disponibles = disponibles;
+        this.disponible = disponible;
     }
 
-    public String getIsbn() {
-        return isbn;
+    public int getId() {
+        return id;
     }
 
-    public void setIsbn(String isbn) {
-        this.isbn = isbn;
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getTitulo() {
@@ -50,22 +42,6 @@ public class Libro {
         this.autor = autor;
     }
 
-    public String getCategoria() {
-        return categoria;
-    }
-
-    public void setCategoria(String categoria) {
-        this.categoria = categoria;
-    }
-
-    public String getEditorial() {
-        return editorial;
-    }
-
-    public void setEditorial(String editorial) {
-        this.editorial = editorial;
-    }
-
     public int getAnioPublicacion() {
         return anioPublicacion;
     }
@@ -74,20 +50,11 @@ public class Libro {
         this.anioPublicacion = anioPublicacion;
     }
 
-    public int getTotalEjemplares() {
-        return totalEjemplares;
+    public boolean isDisponible() {
+        return disponible;
     }
 
-    public void setTotalEjemplares(int totalEjemplares) {
-        this.totalEjemplares = totalEjemplares;
+    public void setDisponible(boolean disponible) {
+        this.disponible = disponible;
     }
-
-    public int getDisponibles() {
-        return disponibles;
-    }
-
-    public void setDisponibles(int disponibles) {
-        this.disponibles = disponibles;
-    }
-
 }

@@ -10,6 +10,9 @@ import com.universidad.biblioteca.model.Usuario;
 // iText PDF imports
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.kernel.font.PdfFontFactory;
+import com.itextpdf.kernel.font.PdfFont;
+import com.itextpdf.io.font.constants.StandardFonts;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Cell;
 import com.itextpdf.layout.element.Table;
@@ -1245,7 +1248,8 @@ public class MainView extends JFrame {
         PdfDocument pdf = new PdfDocument(writer);
         Document document = new Document(pdf);
         
-        document.add(new Paragraph(title).setFontSize(18).setBold());
+        PdfFont boldFont = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
+        document.add(new Paragraph(title).setFontSize(18).setFont(boldFont));
         
         Table table = new Table(4);
         table.addHeaderCell(new Cell().add(new Paragraph("Título")));
@@ -1307,7 +1311,8 @@ public class MainView extends JFrame {
          PdfDocument pdf = new PdfDocument(writer);
          Document document = new Document(pdf);
          
-         document.add(new Paragraph("Historial de Préstamos").setFontSize(18).setBold());
+         PdfFont boldFont = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
+        document.add(new Paragraph("Historial de Préstamos").setFontSize(18).setFont(boldFont));
          
          Table table = new Table(6);
          table.addHeaderCell(new Cell().add(new Paragraph("ID")));
