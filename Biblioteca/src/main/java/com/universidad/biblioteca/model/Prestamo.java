@@ -1,25 +1,22 @@
 package com.universidad.biblioteca.model;
 
-import java.sql.Date;
-
 public class Prestamo {
     private int id;
-    private Libro libro;
-    private Date fechaPrestamo;
-    private Date fechaDevolucion;
-    private double multa;
-    private String estado;
+    private int idLibro;
+    private int idUsuario;
+    private String fechaPrestamo;
+    private String fechaDevolucion;
+    private boolean devuelto;
 
-    public Prestamo() {
-    }
+    public Prestamo() {}
 
-    public Prestamo(int id, Libro libro, Date fechaPrestamo, Date fechaDevolucion, double multa, String estado) {
+    public Prestamo(int id, int idLibro, int idUsuario, String fechaPrestamo, String fechaDevolucion, boolean devuelto) {
         this.id = id;
-        this.libro = libro;
+        this.idLibro = idLibro;
+        this.idUsuario = idUsuario;
         this.fechaPrestamo = fechaPrestamo;
         this.fechaDevolucion = fechaDevolucion;
-        this.multa = multa;
-        this.estado = estado;
+        this.devuelto = devuelto;
     }
 
     public int getId() {
@@ -30,43 +27,43 @@ public class Prestamo {
         this.id = id;
     }
 
-    public Libro getLibro() {
-        return libro;
+    public int getIdLibro() {
+        return idLibro;
     }
 
-    public void setLibro(Libro libro) {
-        this.libro = libro;
+    public void setIdLibro(int idLibro) {
+        this.idLibro = idLibro;
     }
 
-    public Date getFechaPrestamo() {
+    public int getIdUsuario() {
+        return idUsuario;
+    }
+
+    public void setIdUsuario(int idUsuario) {
+        this.idUsuario = idUsuario;
+    }
+
+    public String getFechaPrestamo() {
         return fechaPrestamo;
     }
 
-    public void setFechaPrestamo(Date fechaPrestamo) {
+    public void setFechaPrestamo(String fechaPrestamo) {
         this.fechaPrestamo = fechaPrestamo;
     }
 
-    public Date getFechaDevolucion() {
+    public String getFechaDevolucion() {
         return fechaDevolucion;
     }
 
-    public void setFechaDevolucion(Date fechaDevolucion) {
+    public void setFechaDevolucion(String fechaDevolucion) {
         this.fechaDevolucion = fechaDevolucion;
     }
 
-    public double getMulta() {
-        return multa;
+    public boolean isDevuelto() {
+        return devuelto;
     }
 
-    public void setMulta(double multa) {
-        this.multa = multa;
-    }
-
-    public String getEstado() {
-        return estado;
-    }
-
-    public void setEstado(String estado) {
-        this.estado = estado;
+    public void setDevuelto(boolean devuelto) {
+        this.devuelto = devuelto;
     }
 }

@@ -1,27 +1,26 @@
 package com.universidad.biblioteca.model;
 
 public class Usuario {
-    private String codigo;
+    private int id;
     private String nombre;
-    private String email;
-    private String telefono;
+    private String correo;
+    private String contrasena;
 
-    public Usuario() {
-    }
+    public Usuario() {}
 
-    public Usuario(String codigo, String nombre, String email, String telefono) {
-        this.codigo = codigo;
+    public Usuario(int id, String nombre, String correo, String contrasena) {
+        this.id = id;
         this.nombre = nombre;
-        this.email = email;
-        this.telefono = telefono;
+        this.correo = correo;
+        this.contrasena = contrasena;
     }
 
-    public String getCodigo() {
-        return codigo;
+    public int getId() {
+        return id;
     }
 
-    public void setCodigo(String codigo) {
-        this.codigo = codigo;
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getNombre() {
@@ -32,19 +31,19 @@ public class Usuario {
         this.nombre = nombre;
     }
 
-    public String getEmail() {
-        return email;
+    public String getCorreo() {
+        return correo;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setCorreo(String correo) {
+        this.correo = correo;
     }
 
-    public String getTelefono() {
-        return telefono;
+    public String getContrasena() {
+        return contrasena;
     }
 
-    public void setTelefono(String telefono) {
-        this.telefono = telefono;
+    public void setContrasena(String contrasena) {
+        this.contrasena = contrasena;
     }
 }

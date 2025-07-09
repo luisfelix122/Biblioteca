@@ -1,3 +1,4 @@
+// 📦 Paquete controller
 package com.universidad.biblioteca.controller;
 
 import com.universidad.biblioteca.model.Libro;
@@ -8,69 +9,95 @@ import java.util.List;
 
 public class LibroDAO {
 
-    private final Connection conexion;
+    private Connection conexion;
 
-    public LibroDAO() {
-        this.conexion = ConexionBD.obtenerConexion();
+    public LibroDAO(Connection conexion) {
+        this.conexion = conexion;
     }
 
-    public List<Libro> obtenerTodosLosLibros() throws SQLException {
-        List<Libro> lista = new ArrayList<>();
+    // Obtener todos los libros
+    public List<Libro> obtenerTodos() {
+        List<Libro> libros = new ArrayList<>();
         String sql = "SELECT * FROM libros";
 
-        try (PreparedStatement stmt = conexion.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
+        try (Statement stmt = conexion.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
-                lista.add(mapearLibro(rs));
+                Libro libro = new Libro(
+                    rs.getInt("id"),
+                    rs.getString("titulo"),
+                    rs.getString("autor"),
+                    rs.getBoolean("disponible")
+                );
+                libros.add(libro);
             }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
-        return lista;
+        return libros;
     }
 
-    public List<Libro> buscarLibros(String termino) throws SQLException {
-        List<Libro> lista = new ArrayList<>();
-        String sql = "SELECT * FROM libros WHERE titulo LIKE ? OR autor LIKE ?";
-
+    // Insertar un nuevo libro
+    public boolean insertar(Libro libro) {
+        String sql = "INSERT INTO libros (titulo, autor, disponible) VALUES (?, ?, ?)";
         try (PreparedStatement stmt = conexion.prepareStatement(sql)) {
-            String busqueda = "%" + termino + "%";
-            stmt.setString(1, busqueda);
-            stmt.setString(2, busqueda);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    lista.add(mapearLibro(rs));
-                }
-            }
+            stmt.setString(1, libro.getTitulo());
+            stmt.setString(2, libro.getAutor());
+            stmt.setBoolean(3, libro.isDisponible());
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
         }
-
-        return lista;
     }
 
-    public Libro obtenerLibroPorTitulo(String titulo) throws SQLException {
-        String sql = "SELECT * FROM libros WHERE titulo = ?";
-
+    // Actualizar un libro
+    public boolean actualizar(Libro libro) {
+        String sql = "UPDATE libros SET titulo = ?, autor = ?, disponible = ? WHERE id = ?";
         try (PreparedStatement stmt = conexion.prepareStatement(sql)) {
-            stmt.setString(1, titulo);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return mapearLibro(rs);
-                }
-            }
+            stmt.setString(1, libro.getTitulo());
+            stmt.setString(2, libro.getAutor());
+            stmt.setBoolean(3, libro.isDisponible());
+            stmt.setInt(4, libro.getId());
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
         }
+    }
 
+    // Eliminar un libro
+    public boolean eliminar(int id) {
+        String sql = "DELETE FROM libros WHERE id = ?";
+        try (PreparedStatement stmt = conexion.prepareStatement(sql)) {
+            stmt.setInt(1, id);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // Obtener un libro por ID
+    public Libro obtenerPorId(int id) {
+        String sql = "SELECT * FROM libros WHERE id = ?";
+        try (PreparedStatement stmt = conexion.prepareStatement(sql)) {
+            stmt.setInt(1, id);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return new Libro(
+                    rs.getInt("id"),
+                    rs.getString("titulo"),
+                    rs.getString("autor"),
+                    rs.getBoolean("disponible")
+                );
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return null;
-    }
-
-    private Libro mapearLibro(ResultSet rs) throws SQLException {
-        return new Libro(
-            rs.getInt("id"),
-            rs.getString("titulo"),
-            rs.getString("autor"),
-            rs.getInt("anio_publicacion"),
-            rs.getBoolean("disponible")
-        );
     }
 }

@@ -1,20 +1,18 @@
+
 package com.universidad.biblioteca.model;
 
 public class Libro {
     private int id;
     private String titulo;
     private String autor;
-    private int anioPublicacion;
     private boolean disponible;
 
-    public Libro() {
-    }
+    public Libro() {}
 
-    public Libro(int id, String titulo, String autor, int anioPublicacion, boolean disponible) {
+    public Libro(int id, String titulo, String autor, boolean disponible) {
         this.id = id;
         this.titulo = titulo;
         this.autor = autor;
-        this.anioPublicacion = anioPublicacion;
         this.disponible = disponible;
     }
 
@@ -40,14 +38,6 @@ public class Libro {
 
     public void setAutor(String autor) {
         this.autor = autor;
-    }
-
-    public int getAnioPublicacion() {
-        return anioPublicacion;
-    }
-
-    public void setAnioPublicacion(int anioPublicacion) {
-        this.anioPublicacion = anioPublicacion;
     }
 
     public boolean isDisponible() {
