@@ -1,10 +1,13 @@
 package com.universidad.biblioteca.view;
 
 import com.universidad.biblioteca.controller.LoginController;
+import com.universidad.biblioteca.model.Usuario;
+import com.universidad.biblioteca.config.ConexionBD;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
+import java.sql.Connection;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -370,7 +373,6 @@ public class LoginView extends javax.swing.JFrame {
     }
 
     public static void main(String[] args) {
-        // Configurar look and feel
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeel());
         } catch (Exception e) {
@@ -378,9 +380,55 @@ public class LoginView extends javax.swing.JFrame {
         }
         
         EventQueue.invokeLater(() -> {
-            LoginView v = new LoginView();
-            new LoginController(v);
-            v.setVisible(true);
+            try {
+                // Obtener conexión usando la clase ConexionBD
+                Connection conexion = ConexionBD.obtenerConexion();
+                
+                if (conexion != null) {
+                    LoginView view = new LoginView();
+                    LoginController controller = new LoginController(conexion);
+                    
+                    // Agregar listeners a los botones
+                    view.getBtnLogin().addActionListener(e -> {
+                        String codigo = view.getCodigo();
+                        String password = view.getPassword();
+                        
+                        if (codigo.isEmpty() || password.isEmpty()) {
+                            view.showMessage("Por favor, complete todos los campos");
+                            return;
+                        }
+                        
+                        Usuario usuario = controller.verificarCredenciales(codigo, password);
+                        if (usuario != null) {
+                            view.showMessage("Login exitoso");
+                            // Abrir MainView con el código del usuario
+                            view.dispose();
+                            new MainView(codigo).setVisible(true);
+                        } else {
+                            view.showMessage("Credenciales incorrectas");
+                        }
+                    });
+                    
+                    view.getBtnRegister().addActionListener(e -> {
+                        view.showMessage("Función de registro no implementada");
+                    });
+                    
+                    view.setVisible(true);
+                } else {
+                    JOptionPane.showMessageDialog(null, 
+                        "No se pudo conectar a la base de datos",
+                        "Error de Conexión", 
+                        JOptionPane.ERROR_MESSAGE
+                    );
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, 
+                    "Error al inicializar la aplicación: " + e.getMessage(),
+                    "Error", 
+                    JOptionPane.ERROR_MESSAGE
+                );
+                e.printStackTrace();
+            }
         });
     }
 }

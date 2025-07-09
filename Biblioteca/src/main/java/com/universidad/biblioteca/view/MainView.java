@@ -1,11 +1,13 @@
 package com.universidad.biblioteca.view;
 
-import com.universidad.biblioteca.controller.LibroDAO;
-import com.universidad.biblioteca.controller.PrestamoDAO;
-import com.universidad.biblioteca.controller.UsuarioDAO;
+import com.universidad.biblioteca.dao.LibroDAO;
+import com.universidad.biblioteca.dao.PrestamoDAO;
+import com.universidad.biblioteca.dao.UsuarioDAO;
 import com.universidad.biblioteca.model.Libro;
 import com.universidad.biblioteca.model.Prestamo;
 import com.universidad.biblioteca.model.Usuario;
+import com.universidad.biblioteca.util.ConexionBD;
+import java.sql.Connection;
 
 // iText PDF imports
 import com.itextpdf.kernel.pdf.PdfDocument;
@@ -102,9 +104,14 @@ public class MainView extends JFrame {
         // Inicializar componentes
         initComponents();
         
-        // Inicializar DAOs
-        libroDAO = new LibroDAO();
-        prestamoDAO = new PrestamoDAO();
+        // Inicializar DAOs con conexión
+        try {
+            Connection conexion = ConexionBD.obtenerConexion();
+            libroDAO = new LibroDAO(conexion);
+            prestamoDAO = new PrestamoDAO(conexion);
+        } catch (SQLException e) {
+            mostrarError("Error al conectar con la base de datos: " + e.getMessage());
+        }
         
         // Configurar eventos
         setupEventHandlers();
@@ -1048,6 +1055,7 @@ public class MainView extends JFrame {
      */
     private void cargarDatosUsuario() {
         try {
+            Connection conexion = ConexionBD.obtenerConexion();
             UsuarioDAO usuarioDAO = new UsuarioDAO();
             Usuario usuario = usuarioDAO.obtenerUsuarioPorCodigo(codigoUser);
             
@@ -1126,6 +1134,7 @@ public class MainView extends JFrame {
      * Guarda los cambios del perfil de usuario.
      */
     private void guardarPerfil() {
+        Connection conexion = null;
         try {
             String nombre = txtNombre.getText().trim();
             String email = txtEmail.getText().trim();
@@ -1136,7 +1145,8 @@ public class MainView extends JFrame {
                 return;
             }
             
-            UsuarioDAO usuarioDAO = new UsuarioDAO();
+            conexion = ConexionBD.obtenerConexion();
+            UsuarioDAO usuarioDAO = new UsuarioDAO(conexion);
             Usuario usuario = new Usuario();
             usuario.setCodigo(codigoUser);
             usuario.setNombre(nombre);
@@ -1151,6 +1161,10 @@ public class MainView extends JFrame {
             }
         } catch (SQLException e) {
             mostrarError("Error al guardar perfil: " + e.getMessage());
+        } finally {
+            if (conexion != null) {
+                ConexionBD.cerrarConexion(conexion);
+            }
         }
     }
     
@@ -1161,9 +1175,12 @@ public class MainView extends JFrame {
      */
     private void exportarCatalogoExcel() {
         try {
+            Connection conexion = ConexionBD.obtenerConexion();
+            LibroDAO libroDAO = new LibroDAO(conexion);
             List<Libro> libros = libroDAO.obtenerTodosLosLibros();
             exportarExcel(libros, "Catalogo.xlsx", "Catálogo de Libros");
             mostrarExito("Catálogo exportado exitosamente.");
+            ConexionBD.cerrarConexion(conexion);
         } catch (Exception e) {
             mostrarError("Error al exportar catálogo: " + e.getMessage());
         }
@@ -1174,9 +1191,12 @@ public class MainView extends JFrame {
      */
     private void exportarCatalogoPDF() {
         try {
+            Connection conexion = ConexionBD.obtenerConexion();
+            LibroDAO libroDAO = new LibroDAO(conexion);
             List<Libro> libros = libroDAO.obtenerTodosLosLibros();
             exportarPDF(libros, "Catalogo.pdf", "Catálogo de Libros");
             mostrarExito("Catálogo PDF exportado exitosamente.");
+            ConexionBD.cerrarConexion(conexion);
         } catch (Exception e) {
             mostrarError("Error al exportar PDF: " + e.getMessage());
         }
@@ -1187,9 +1207,12 @@ public class MainView extends JFrame {
      */
     private void exportarHistorialExcel() {
         try {
+            Connection conexion = ConexionBD.obtenerConexion();
+            PrestamoDAO prestamoDAO = new PrestamoDAO(conexion);
             List<Prestamo> historial = prestamoDAO.obtenerHistorialPorUsuario(codigoUser);
             exportarHistorialExcel(historial, "Historial.xlsx");
             mostrarExito("Historial exportado exitosamente.");
+            ConexionBD.cerrarConexion(conexion);
         } catch (Exception e) {
             mostrarError("Error al exportar historial: " + e.getMessage());
         }
@@ -1200,9 +1223,12 @@ public class MainView extends JFrame {
      */
     private void exportarHistorialPDF() {
         try {
+            Connection conexion = ConexionBD.obtenerConexion();
+            PrestamoDAO prestamoDAO = new PrestamoDAO(conexion);
             List<Prestamo> historial = prestamoDAO.obtenerHistorialPorUsuario(codigoUser);
             exportarHistorialPDF(historial, "Historial.pdf");
             mostrarExito("Historial PDF exportado exitosamente.");
+            ConexionBD.cerrarConexion(conexion);
         } catch (Exception e) {
             mostrarError("Error al exportar PDF: " + e.getMessage());
         }
