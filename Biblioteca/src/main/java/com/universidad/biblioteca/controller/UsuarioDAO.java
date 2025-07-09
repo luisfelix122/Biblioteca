@@ -24,12 +24,18 @@ public class UsuarioDAO {
                     u.setNombre(rs.getString("nombre"));
                     u.setEmail(rs.getString("email"));
                     u.setTelefono(rs.getString("telefono"));
+                    u.setPassword(rs.getString("password"));
                     return u;
                 }
             }
         }
 
         return null;
+    }
+    
+    // Método alias para compatibilidad con LoginController
+    public Usuario obtenerPorCodigo(String codigo) throws SQLException {
+        return obtenerUsuarioPorCodigo(codigo);
     }
 
     public boolean actualizarUsuario(Usuario usuario) throws SQLException {
