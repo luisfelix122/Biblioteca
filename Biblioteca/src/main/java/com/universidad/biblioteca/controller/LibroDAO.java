@@ -1,14 +1,11 @@
-// 📦 Paquete controller
 package com.universidad.biblioteca.controller;
 
 import com.universidad.biblioteca.model.Libro;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class LibroDAO {
-
     private Connection conexion;
 
     public LibroDAO(Connection conexion) {
@@ -16,88 +13,80 @@ public class LibroDAO {
     }
 
     // Obtener todos los libros
-    public List<Libro> obtenerTodos() {
+    public List<Libro> obtenerTodosLosLibros() throws SQLException {
         List<Libro> libros = new ArrayList<>();
-        String sql = "SELECT * FROM libros";
-
+        String sql = "SELECT * FROM Libro";
         try (Statement stmt = conexion.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
-
             while (rs.next()) {
-                Libro libro = new Libro(
-                    rs.getInt("id"),
-                    rs.getString("titulo"),
-                    rs.getString("autor"),
-                    rs.getBoolean("disponible")
-                );
+                Libro libro = new Libro();
+                libro.setId(rs.getInt("isbn"));  // Cambiado de "id" a "isbn"
+                libro.setTitulo(rs.getString("titulo"));
+                libro.setAutor(rs.getString("autor"));
+                libro.setCategoria(rs.getString("categoria"));
+                libro.setEditorial(rs.getString("editorial"));
+                libro.setAnioPublicacion(rs.getInt("anioPublicacion"));
+                libro.setDisponible(rs.getInt("disponibles") > 0);
                 libros.add(libro);
             }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
-
         return libros;
     }
 
-    // Insertar un nuevo libro
-    public boolean insertar(Libro libro) {
-        String sql = "INSERT INTO libros (titulo, autor, disponible) VALUES (?, ?, ?)";
+    // Obtener libro por isbn
+    public Libro obtenerPorId(int isbn) throws SQLException {
+        String sql = "SELECT * FROM Libro WHERE isbn = ?";
         try (PreparedStatement stmt = conexion.prepareStatement(sql)) {
-            stmt.setString(1, libro.getTitulo());
-            stmt.setString(2, libro.getAutor());
-            stmt.setBoolean(3, libro.isDisponible());
-            return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    // Actualizar un libro
-    public boolean actualizar(Libro libro) {
-        String sql = "UPDATE libros SET titulo = ?, autor = ?, disponible = ? WHERE id = ?";
-        try (PreparedStatement stmt = conexion.prepareStatement(sql)) {
-            stmt.setString(1, libro.getTitulo());
-            stmt.setString(2, libro.getAutor());
-            stmt.setBoolean(3, libro.isDisponible());
-            stmt.setInt(4, libro.getId());
-            return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    // Eliminar un libro
-    public boolean eliminar(int id) {
-        String sql = "DELETE FROM libros WHERE id = ?";
-        try (PreparedStatement stmt = conexion.prepareStatement(sql)) {
-            stmt.setInt(1, id);
-            return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    // Obtener un libro por ID
-    public Libro obtenerPorId(int id) {
-        String sql = "SELECT * FROM libros WHERE id = ?";
-        try (PreparedStatement stmt = conexion.prepareStatement(sql)) {
-            stmt.setInt(1, id);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return new Libro(
-                    rs.getInt("id"),
-                    rs.getString("titulo"),
-                    rs.getString("autor"),
-                    rs.getBoolean("disponible")
-                );
+            stmt.setInt(1, isbn);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    Libro libro = new Libro();
+                    libro.setId(rs.getInt("isbn")); // Cambiado de "id" a "isbn"
+                    libro.setTitulo(rs.getString("titulo"));
+                    libro.setAutor(rs.getString("autor"));
+                    libro.setCategoria(rs.getString("categoria"));
+                    libro.setEditorial(rs.getString("editorial"));
+                    libro.setAnioPublicacion(rs.getInt("anioPublicacion"));
+                    libro.setDisponible(rs.getInt("disponibles") > 0);
+                    return libro;
+                }
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
         return null;
+    }
+
+    // Actualizar disponibilidad del libro
+    public boolean actualizar(Libro libro) throws SQLException {
+        String sql = "UPDATE Libro SET disponibles = ? WHERE isbn = ?";
+        try (PreparedStatement stmt = conexion.prepareStatement(sql)) {
+            stmt.setInt(1, libro.isDisponible() ? 1 : 0);
+            stmt.setInt(2, libro.getId());
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
+    // Buscar libros por título o autor
+    public List<Libro> buscarLibros(String termino) throws SQLException {
+        List<Libro> libros = new ArrayList<>();
+        String sql = "SELECT * FROM Libro WHERE titulo LIKE ? OR autor LIKE ?";
+        try (PreparedStatement stmt = conexion.prepareStatement(sql)) {
+            String likeTerm = "%" + termino + "%";
+            stmt.setString(1, likeTerm);
+            stmt.setString(2, likeTerm);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Libro libro = new Libro();
+                    libro.setId(rs.getInt("isbn")); // Cambiado de "id" a "isbn"
+                    libro.setTitulo(rs.getString("titulo"));
+                    libro.setAutor(rs.getString("autor"));
+                    libro.setCategoria(rs.getString("categoria"));
+                    libro.setEditorial(rs.getString("editorial"));
+                    libro.setAnioPublicacion(rs.getInt("anioPublicacion"));
+                    libro.setDisponible(rs.getInt("disponibles") > 0);
+                    libros.add(libro);
+                }
+            }
+        }
+        return libros;
     }
 }

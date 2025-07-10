@@ -1,0 +1,16 @@
+﻿# Maven build output
+Biblioteca/target/
+target/
+
+# IDE files
+.idea/
+*.iml
+
+# Compiled files
+*.class
+*.jar
+*.war
+*.ear
+
+# Log files
+*.log

@@ -1,24 +1,29 @@
 package com.universidad.biblioteca.model;
 
+import java.util.Date;
+
 public class Prestamo {
     private int id;
-    private int idLibro;
-    private int idUsuario;
-    private String fechaPrestamo;
-    private String fechaDevolucion;
-    private boolean devuelto;
+    private Usuario usuario;
+    private Libro libro;
+    private Date fechaPrestamo;
+    private Date fechaDevolucion;
+    private double multa;
 
+    // Constructor vacío
     public Prestamo() {}
 
-    public Prestamo(int id, int idLibro, int idUsuario, String fechaPrestamo, String fechaDevolucion, boolean devuelto) {
+    // Constructor completo
+    public Prestamo(int id, Usuario usuario, Libro libro, Date fechaPrestamo, Date fechaDevolucion, double multa) {
         this.id = id;
-        this.idLibro = idLibro;
-        this.idUsuario = idUsuario;
+        this.usuario = usuario;
+        this.libro = libro;
         this.fechaPrestamo = fechaPrestamo;
         this.fechaDevolucion = fechaDevolucion;
-        this.devuelto = devuelto;
+        this.multa = multa;
     }
 
+    // Getters y Setters
     public int getId() {
         return id;
     }
@@ -27,43 +32,56 @@ public class Prestamo {
         this.id = id;
     }
 
-    public int getIdLibro() {
-        return idLibro;
+    public Usuario getUsuario() {
+        return usuario;
     }
 
-    public void setIdLibro(int idLibro) {
-        this.idLibro = idLibro;
+    public void setUsuario(Usuario usuario) {
+        this.usuario = usuario;
     }
 
-    public int getIdUsuario() {
-        return idUsuario;
+    public Libro getLibro() {
+        return libro;
     }
 
-    public void setIdUsuario(int idUsuario) {
-        this.idUsuario = idUsuario;
+    public void setLibro(Libro libro) {
+        this.libro = libro;
     }
 
-    public String getFechaPrestamo() {
+    public Date getFechaPrestamo() {
         return fechaPrestamo;
     }
 
-    public void setFechaPrestamo(String fechaPrestamo) {
+    public void setFechaPrestamo(Date fechaPrestamo) {
         this.fechaPrestamo = fechaPrestamo;
     }
 
-    public String getFechaDevolucion() {
+    public Date getFechaDevolucion() {
         return fechaDevolucion;
     }
 
-    public void setFechaDevolucion(String fechaDevolucion) {
+    public void setFechaDevolucion(Date fechaDevolucion) {
         this.fechaDevolucion = fechaDevolucion;
     }
 
-    public boolean isDevuelto() {
-        return devuelto;
+    public double getMulta() {
+        return multa;
     }
 
-    public void setDevuelto(boolean devuelto) {
-        this.devuelto = devuelto;
+    public void setMulta(double multa) {
+        this.multa = multa;
+    }
+
+    // Opcional: para debug
+    @Override
+    public String toString() {
+        return "Prestamo{" +
+                "id=" + id +
+                ", usuario=" + (usuario != null ? usuario.getCodigo() : "null") +
+                ", libro=" + (libro != null ? libro.getId() : "null") +
+                ", fechaPrestamo=" + fechaPrestamo +
+                ", fechaDevolucion=" + fechaDevolucion +
+                ", multa=" + multa +
+                '}';
     }
 }

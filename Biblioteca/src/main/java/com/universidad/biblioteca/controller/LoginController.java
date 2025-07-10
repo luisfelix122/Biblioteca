@@ -1,9 +1,6 @@
-// 📦 Paquete controller
 package com.universidad.biblioteca.controller;
 
-import com.universidad.biblioteca.model.Prestamo;
 import com.universidad.biblioteca.model.Usuario;
-
 import java.sql.*;
 
 public class LoginController {
@@ -14,42 +11,26 @@ public class LoginController {
         this.conexion = conexion;
     }
 
-    // Verifica si las credenciales son correctas
-    public Usuario verificarCredenciales(String correo, String contrasena) {
-        String sql = "SELECT * FROM usuarios WHERE correo = ? AND contrasena = ?";
-
+    // Login por código de usuario, no correo
+    public Usuario verificarCredenciales(String codigo, String contrasena) {
+        String sql = "SELECT * FROM Usuario WHERE codigo = ? AND contrasena = ?";
         try (PreparedStatement stmt = conexion.prepareStatement(sql)) {
-            stmt.setString(1, correo);
+            stmt.setString(1, codigo);
             stmt.setString(2, contrasena);
             ResultSet rs = stmt.executeQuery();
-
             if (rs.next()) {
-                return new Usuario(
-                    rs.getInt("id"),
-                    rs.getString("nombre"),
-                    rs.getString("correo"),
-                    rs.getString("contrasena")
-                );
+                Usuario usuario = new Usuario();
+                usuario.setId(rs.getInt("id"));
+                usuario.setCodigo(rs.getString("codigo"));
+                usuario.setNombre(rs.getString("nombre"));
+                usuario.setCorreo(rs.getString("email"));
+                usuario.setTelefono(rs.getString("telefono"));
+                usuario.setContrasena(rs.getString("contrasena"));
+                return usuario;
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
         return null;
-    }
-
-    // (Opcional) Método para verificar si un correo existe
-    public boolean existeCorreo(String correo) {
-        String sql = "SELECT COUNT(*) FROM usuarios WHERE correo = ?";
-        try (PreparedStatement stmt = conexion.prepareStatement(sql)) {
-            stmt.setString(1, correo);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return rs.getInt(1) > 0;
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
     }
 }
