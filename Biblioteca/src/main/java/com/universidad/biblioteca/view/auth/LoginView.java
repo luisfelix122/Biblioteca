@@ -1,9 +1,7 @@
-package com.universidad.biblioteca.view;
+package com.universidad.biblioteca.view.auth;
 
-import com.universidad.biblioteca.controller.LibroDAO;
-import com.universidad.biblioteca.controller.LoginController;
-import com.universidad.biblioteca.model.Usuario;
 import com.universidad.biblioteca.config.ConexionBD;
+import com.universidad.biblioteca.controller.LoginController;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -204,26 +202,7 @@ public class LoginView extends JFrame {
             Connection conexion = ConexionBD.obtenerConexion();
             if (conexion != null) {
                 LoginView view = new LoginView();
-                LoginController controller = new LoginController(conexion);
-
-                view.getBtnLogin().addActionListener(e -> {
-                    String codigo = view.getCodigo();
-                    String pass = view.getPassword();
-                    if (codigo.isEmpty() || pass.isEmpty()) {
-                        view.showMessage("Por favor, complete todos los campos");
-                        return;
-                    }
-                    Usuario u = controller.verificarCredenciales(codigo, pass);
-                    if (u != null) {
-                        view.showMessage("Login exitoso");
-                        view.dispose();
-                        new MainView(u).setVisible(true);
-                    } else {
-                        view.showMessage("Credenciales incorrectas");
-                    }
-                });
-
-                view.getBtnRegister().addActionListener(e -> view.showMessage("Función de registro no implementada"));
+                new LoginController(view, conexion);
                 view.setVisible(true);
             } else {
                 JOptionPane.showMessageDialog(null, "No se pudo conectar a la base de datos", "Error", JOptionPane.ERROR_MESSAGE);
