@@ -34,6 +34,8 @@ public class CatalogoPanel extends JPanel {
     private DefaultTableModel modeloCatalogo;
     private JTextField campoBusqueda;
     private JButton botonSolicitar;
+    private static final String[] TABLE_HEADERS = {"ID", "Título", "Autor", "Año", "Disponible"};
+
 
     public CatalogoPanel(MainView mainView, LibroDAO libroDAO, PrestamoDAO prestamoDAO, Usuario usuarioLogueado) {
         this.mainView = mainView;
@@ -49,6 +51,7 @@ public class CatalogoPanel extends JPanel {
     }
 
     private void initUI() {
+        // Panel Superior
         JPanel panelSuperior = new JPanel(new BorderLayout(10, 0));
         campoBusqueda = new JTextField();
         JButton botonBuscar = new JButton("Buscar");
@@ -58,7 +61,8 @@ public class CatalogoPanel extends JPanel {
         panelSuperior.add(botonExportar, BorderLayout.WEST);
         add(panelSuperior, BorderLayout.NORTH);
 
-        modeloCatalogo = new DefaultTableModel(new String[]{"ID", "Título", "Autor", "Año", "Disponible"}, 0) {
+        // Tabla
+        modeloCatalogo = new DefaultTableModel(TABLE_HEADERS, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -67,11 +71,14 @@ public class CatalogoPanel extends JPanel {
         tablaCatalogo = new JTable(modeloCatalogo);
         add(new JScrollPane(tablaCatalogo), BorderLayout.CENTER);
 
+        // Botón inferior
         botonSolicitar = new JButton("Solicitar Libro Seleccionado");
         botonSolicitar.setEnabled(false);
         add(botonSolicitar, BorderLayout.SOUTH);
 
+        // Listeners
         botonBuscar.addActionListener(e -> buscarLibros());
+        campoBusqueda.addActionListener(e -> buscarLibros());
         botonExportar.addActionListener(e -> exportarCatalogoAExcel());
         botonSolicitar.addActionListener(e -> solicitarLibro());
 
@@ -84,14 +91,8 @@ public class CatalogoPanel extends JPanel {
 
     public void cargarDatosCatalogo() {
         try {
-            modeloCatalogo.setRowCount(0);
             List<Libro> libros = libroDAO.obtenerTodosLosLibros();
-            for (Libro libro : libros) {
-                modeloCatalogo.addRow(new Object[]{
-                        libro.getId(), libro.getTitulo(), libro.getAutor(),
-                        libro.getAnioPublicacion(), libro.isDisponible() ? "Sí" : "No"
-                });
-            }
+            poblarTabla(libros);
         } catch (SQLException e) {
             mainView.mostrarError("Error al cargar el catálogo: " + e.getMessage());
         }
@@ -100,16 +101,20 @@ public class CatalogoPanel extends JPanel {
     private void buscarLibros() {
         try {
             String termino = campoBusqueda.getText().trim();
-            modeloCatalogo.setRowCount(0);
             List<Libro> libros = libroDAO.buscarLibros(termino);
-            for (Libro libro : libros) {
-                modeloCatalogo.addRow(new Object[]{
-                        libro.getId(), libro.getTitulo(), libro.getAutor(),
-                        libro.getAnioPublicacion(), libro.isDisponible() ? "Sí" : "No"
-                });
-            }
+            poblarTabla(libros);
         } catch (SQLException e) {
             mainView.mostrarError("Error al buscar libros: " + e.getMessage());
+        }
+    }
+
+    private void poblarTabla(List<Libro> libros) {
+        modeloCatalogo.setRowCount(0);
+        for (Libro libro : libros) {
+            modeloCatalogo.addRow(new Object[]{
+                    libro.getId(), libro.getTitulo(), libro.getAutor(),
+                    libro.getAnioPublicacion(), libro.isDisponible() ? "Sí" : "No"
+            });
         }
     }
 

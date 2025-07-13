@@ -14,11 +14,11 @@ import java.util.List;
 
 public class MisPrestamosPanel extends JPanel {
 
+    private static final String[] TABLE_HEADERS = {"ID Préstamo", "Libro", "Fecha Préstamo", "Fecha Devolución", "Multa", "Devuelto"};
     private final MainView mainView;
     private final PrestamoDAO prestamoDAO;
     private final LibroDAO libroDAO;
     private final Usuario usuarioLogueado;
-
     private JTable tablaMisPrestamos;
     private DefaultTableModel modeloMisPrestamos;
     private JButton botonDevolver;
@@ -37,13 +37,7 @@ public class MisPrestamosPanel extends JPanel {
     }
 
     private void initUI() {
-        modeloMisPrestamos = new DefaultTableModel(new String[]{"ID Préstamo", "Libro", "Fecha Préstamo", "Fecha Devolución", "Multa", "Devuelto"}, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        tablaMisPrestamos = new JTable(modeloMisPrestamos);
+        tablaMisPrestamos = createTable();
         add(new JScrollPane(tablaMisPrestamos), BorderLayout.CENTER);
 
         botonDevolver = new JButton("Devolver Libro Seleccionado");
@@ -54,15 +48,29 @@ public class MisPrestamosPanel extends JPanel {
 
         tablaMisPrestamos.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-                int selectedRow = tablaMisPrestamos.getSelectedRow();
-                if (selectedRow != -1) {
-                    boolean devuelto = (boolean) modeloMisPrestamos.getValueAt(selectedRow, 5);
-                    botonDevolver.setEnabled(!devuelto);
-                } else {
-                    botonDevolver.setEnabled(false);
-                }
+                updateDevolverButtonState();
             }
         });
+    }
+
+    private JTable createTable() {
+        modeloMisPrestamos = new DefaultTableModel(TABLE_HEADERS, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        return new JTable(modeloMisPrestamos);
+    }
+
+    private void updateDevolverButtonState() {
+        int selectedRow = tablaMisPrestamos.getSelectedRow();
+        if (selectedRow != -1) {
+            boolean devuelto = (boolean) modeloMisPrestamos.getValueAt(selectedRow, 5);
+            botonDevolver.setEnabled(!devuelto);
+        } else {
+            botonDevolver.setEnabled(false);
+        }
     }
 
     public void cargarDatosMisPrestamos() {

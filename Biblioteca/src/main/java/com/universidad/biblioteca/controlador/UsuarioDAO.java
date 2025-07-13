@@ -10,6 +10,28 @@ public class UsuarioDAO {
         this.conexion = conexion;
     }
 
+    public Usuario verificarCredenciales(String codigo, String contrasena) throws SQLException {
+        String sql = "SELECT * FROM Usuario WHERE codigo = ? AND contrasena = ?";
+        try (PreparedStatement stmt = conexion.prepareStatement(sql)) {
+            stmt.setString(1, codigo);
+            stmt.setString(2, contrasena);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                Usuario usuario = new Usuario();
+                usuario.setId(rs.getInt("id"));
+                usuario.setCodigo(rs.getString("codigo"));
+                usuario.setNombre(rs.getString("nombre"));
+                usuario.setCorreo(rs.getString("email"));
+                usuario.setTelefono(rs.getString("telefono"));
+                usuario.setContrasena(rs.getString("contrasena"));
+                usuario.setRol(rs.getString("rol"));
+                usuario.setFechaRegistro(rs.getDate("fechaRegistro"));
+                return usuario;
+            }
+        }
+        return null;
+    }
+
     public Usuario obtenerPorCodigo(String codigo) throws SQLException {
         String sql = "SELECT * FROM Usuario WHERE codigo = ?";
         try (PreparedStatement stmt = conexion.prepareStatement(sql)) {

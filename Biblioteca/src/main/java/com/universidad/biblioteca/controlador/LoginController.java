@@ -4,25 +4,22 @@ import com.universidad.biblioteca.modelo.Usuario;
 import com.universidad.biblioteca.vista.main.MainView;
 import com.universidad.biblioteca.vista.auth.LoginView;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class LoginController {
 
     private final LoginView view;
-    private final Connection conexion;
+    private final UsuarioDAO usuarioDAO;
 
-    public LoginController(LoginView view, Connection conexion) {
+    public LoginController(LoginView view, UsuarioDAO usuarioDAO) {
         this.view = view;
-        this.conexion = conexion;
+        this.usuarioDAO = usuarioDAO;
         initController();
     }
 
     private void initController() {
-        view.getBtnLogin().addActionListener(_ -> login());
-        view.getBtnRegister().addActionListener(_ -> register());
+        view.getBtnLogin().addActionListener(e -> login());
+        view.getBtnRegister().addActionListener(e -> register());
     }
 
     private void login() {
@@ -35,7 +32,7 @@ public class LoginController {
         }
 
         try {
-            Usuario u = verificarCredenciales(codigo, pass);
+            Usuario u = usuarioDAO.verificarCredenciales(codigo, pass);
 
             if (u != null) {
                 view.showMessage("Login exitoso");
@@ -52,27 +49,5 @@ public class LoginController {
 
     private void register() {
         view.showMessage("Función de registro no implementada");
-    }
-
-    public Usuario verificarCredenciales(String codigo, String contrasena) throws SQLException {
-        String sql = "SELECT * FROM Usuario WHERE codigo = ? AND contrasena = ?";
-        try (PreparedStatement stmt = conexion.prepareStatement(sql)) {
-            stmt.setString(1, codigo);
-            stmt.setString(2, contrasena);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                Usuario usuario = new Usuario();
-                usuario.setId(rs.getInt("id"));
-                usuario.setCodigo(rs.getString("codigo"));
-                usuario.setNombre(rs.getString("nombre"));
-                usuario.setCorreo(rs.getString("email")); // Corregido de "correo" a "email"
-                usuario.setTelefono(rs.getString("telefono"));
-                usuario.setContrasena(rs.getString("contrasena"));
-                usuario.setRol(rs.getString("rol"));
-                usuario.setFechaRegistro(rs.getDate("fechaRegistro"));
-                return usuario;
-            }
-        }
-        return null;
     }
 }

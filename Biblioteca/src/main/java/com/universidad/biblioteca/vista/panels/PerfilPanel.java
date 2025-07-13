@@ -15,7 +15,6 @@ public class PerfilPanel extends JPanel {
 
     private JTextField campoCodigo, campoNombre, campoCorreo, campoTelefono;
     private JPasswordField campoContrasena;
-    private JButton botonActualizarPerfil;
 
     public PerfilPanel(MainView mainView, UsuarioDAO usuarioDAO, Usuario usuarioLogueado) {
         this.mainView = mainView;
@@ -34,28 +33,31 @@ public class PerfilPanel extends JPanel {
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        gbc.gridx = 0; gbc.gridy = 0; add(new JLabel("Código:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 0; campoCodigo = new JTextField(20); campoCodigo.setEditable(false); add(campoCodigo, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 1; add(new JLabel("Nombre:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 1; campoNombre = new JTextField(20); add(campoNombre, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 2; add(new JLabel("Correo:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 2; campoCorreo = new JTextField(20); add(campoCorreo, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 3; add(new JLabel("Teléfono:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 3; campoTelefono = new JTextField(20); add(campoTelefono, gbc);
+        campoCodigo = createFormField("Código:", 0, gbc);
+        campoCodigo.setEditable(false);
+        campoNombre = createFormField("Nombre:", 1, gbc);
+        campoCorreo = createFormField("Correo:", 2, gbc);
+        campoTelefono = createFormField("Teléfono:", 3, gbc);
 
         gbc.gridx = 0; gbc.gridy = 4; add(new JLabel("Contraseña:"), gbc);
         gbc.gridx = 1; gbc.gridy = 4; campoContrasena = new JPasswordField(20); add(campoContrasena, gbc);
 
-        botonActualizarPerfil = new JButton("Actualizar Perfil");
+        JButton botonActualizarPerfil = new JButton("Actualizar Perfil");
         gbc.gridx = 1; gbc.gridy = 5; gbc.anchor = GridBagConstraints.EAST; gbc.fill = GridBagConstraints.NONE;
         add(botonActualizarPerfil, gbc);
         botonActualizarPerfil.addActionListener(e -> actualizarPerfil());
     }
 
-    private void cargarDatosPerfil() {
+    private JTextField createFormField(String label, int y, GridBagConstraints gbc) {
+        gbc.gridx = 0; gbc.gridy = y;
+        add(new JLabel(label), gbc);
+        gbc.gridx = 1;
+        JTextField textField = new JTextField(20);
+        add(textField, gbc);
+        return textField;
+    }
+
+    public void cargarDatosPerfil() {
         campoCodigo.setText(usuarioLogueado.getCodigo());
         campoNombre.setText(usuarioLogueado.getNombre());
         campoCorreo.setText(usuarioLogueado.getCorreo());
@@ -63,9 +65,9 @@ public class PerfilPanel extends JPanel {
     }
 
     private void actualizarPerfil() {
-        String nombre = campoNombre.getText();
-        String correo = campoCorreo.getText();
-        String telefono = campoTelefono.getText();
+        String nombre = campoNombre.getText().trim();
+        String correo = campoCorreo.getText().trim();
+        String telefono = campoTelefono.getText().trim();
         String contrasena = new String(campoContrasena.getPassword());
 
         if (nombre.isEmpty() || correo.isEmpty() || telefono.isEmpty()) {

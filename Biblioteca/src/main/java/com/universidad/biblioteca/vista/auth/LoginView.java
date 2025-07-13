@@ -2,6 +2,7 @@ package com.universidad.biblioteca.vista.auth;
 
 import com.universidad.biblioteca.config.ConexionBD;
 import com.universidad.biblioteca.controlador.LoginController;
+import com.universidad.biblioteca.controlador.UsuarioDAO;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -22,6 +23,10 @@ public class LoginView extends JFrame {
     private JButton btnRegister;
 
     public LoginView() {
+        init();
+    }
+
+    private void init() {
         setTitle("Sistema de Biblioteca Universitaria");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setResizable(false);
@@ -204,7 +209,8 @@ public class LoginView extends JFrame {
             try {
                 Connection conexion = ConexionBD.obtenerConexion();
                 LoginView view = new LoginView();
-                new LoginController(view, conexion);
+                UsuarioDAO usuarioDAO = new UsuarioDAO(conexion);
+                new LoginController(view, usuarioDAO);
                 view.setVisible(true);
             } catch (SQLException e) {
                 JOptionPane.showMessageDialog(null, "No se pudo conectar a la base de datos: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);

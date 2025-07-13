@@ -13,17 +13,15 @@ import java.util.List;
 
 public class HistorialPanel extends JPanel {
 
+    private static final String[] TABLE_HEADERS = {"ID Préstamo", "Libro", "Fecha Préstamo", "Fecha Devolución", "Multa", "Devuelto"};
     private final MainView mainView;
     private final PrestamoDAO prestamoDAO;
-    private final Usuario usuarioLogueado;
 
-    private JTable tablaHistorial;
     private DefaultTableModel modeloHistorial;
 
     public HistorialPanel(MainView mainView, PrestamoDAO prestamoDAO, Usuario usuarioLogueado) {
         this.mainView = mainView;
         this.prestamoDAO = prestamoDAO;
-        this.usuarioLogueado = usuarioLogueado;
 
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -33,14 +31,17 @@ public class HistorialPanel extends JPanel {
     }
 
     private void initUI() {
-        modeloHistorial = new DefaultTableModel(new String[]{"ID Préstamo", "Libro", "Fecha Préstamo", "Fecha Devolución", "Multa", "Devuelto"}, 0) {
+        add(new JScrollPane(createTable()), BorderLayout.CENTER);
+    }
+
+    private JTable createTable() {
+        modeloHistorial = new DefaultTableModel(TABLE_HEADERS, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
         };
-        tablaHistorial = new JTable(modeloHistorial);
-        add(new JScrollPane(tablaHistorial), BorderLayout.CENTER);
+        return new JTable(modeloHistorial);
     }
 
     public void cargarDatosHistorial() {

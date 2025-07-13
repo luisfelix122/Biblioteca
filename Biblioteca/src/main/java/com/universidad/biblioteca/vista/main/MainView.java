@@ -11,6 +11,7 @@ import com.universidad.biblioteca.vista.panels.MisPrestamosPanel;
 import com.universidad.biblioteca.vista.panels.PerfilPanel;
 
 import javax.swing.*;
+import java.awt.*;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -34,12 +35,15 @@ public class MainView extends JFrame {
         this.prestamoDAO = new PrestamoDAO(conexion);
         this.usuarioDAO = new UsuarioDAO(conexion);
 
+        initFrame();
+        initUI();
+    }
+
+    private void initFrame() {
         setTitle("Sistema de Biblioteca Universitaria - Bienvenido, " + usuarioLogueado.getNombre());
         setSize(1000, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-
-        initUI();
     }
 
     private void initUI() {
@@ -61,6 +65,19 @@ public class MainView extends JFrame {
         perfilPanel = new PerfilPanel(this, usuarioDAO, usuarioLogueado);
         tabbedPane.addTab("Mi Perfil", perfilPanel);
 
+        tabbedPane.addChangeListener(e -> {
+            Component selectedComponent = tabbedPane.getSelectedComponent();
+            if (selectedComponent == catalogoPanel) {
+                catalogoPanel.cargarDatosCatalogo();
+            } else if (selectedComponent == misPrestamosPanel) {
+                misPrestamosPanel.cargarDatosMisPrestamos();
+            } else if (selectedComponent == historialPanel) {
+                historialPanel.cargarDatosHistorial();
+            } else if (selectedComponent == perfilPanel) {
+                perfilPanel.cargarDatosPerfil();
+            }
+        });
+
         add(tabbedPane);
     }
 
@@ -69,7 +86,7 @@ public class MainView extends JFrame {
     }
 
     public void mostrarError(String mensaje) {
-        JOptionPane.showMessageDialog(this, mensaje, "Error", JOptionPane.ERROR_MESSAGE);
+        mostrarMensaje(mensaje, "Error", JOptionPane.ERROR_MESSAGE);
     }
 
     public void mostrarMensaje(String mensaje, String titulo, int tipo) {
