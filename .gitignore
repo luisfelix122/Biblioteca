@@ -1,16 +1,11 @@
-# Maven build output
-Biblioteca/target/
-target/
+# Ignorar todo por defecto
+*
 
-# IDE files
-.idea/
-*.iml
+# No ignorar el directorio Biblioteca
+!/Biblioteca/
 
-# Compiled files
-*.class
-*.jar
-*.war
-*.ear
+# No ignorar el directorio .vscode
+!/.vscode/
 
-# Log files
-*.log
+# No ignorar el propio .gitignore
+!/.gitignore
