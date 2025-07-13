@@ -1,8 +1,8 @@
-package com.universidad.biblioteca.controller;
+package com.universidad.biblioteca.controlador;
 
-import com.universidad.biblioteca.model.Usuario;
-import com.universidad.biblioteca.view.MainView;
-import com.universidad.biblioteca.view.auth.LoginView;
+import com.universidad.biblioteca.modelo.Usuario;
+import com.universidad.biblioteca.vista.main.MainView;
+import com.universidad.biblioteca.vista.auth.LoginView;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -21,8 +21,8 @@ public class LoginController {
     }
 
     private void initController() {
-        view.getBtnLogin().addActionListener(e -> login());
-        view.getBtnRegister().addActionListener(e -> register());
+        view.getBtnLogin().addActionListener(_ -> login());
+        view.getBtnRegister().addActionListener(_ -> register());
     }
 
     private void login() {
@@ -34,14 +34,19 @@ public class LoginController {
             return;
         }
 
-        Usuario u = verificarCredenciales(codigo, pass);
+        try {
+            Usuario u = verificarCredenciales(codigo, pass);
 
-        if (u != null) {
-            view.showMessage("Login exitoso");
-            view.dispose();
-            new MainView(u).setVisible(true);
-        } else {
-            view.showMessage("Credenciales incorrectas");
+            if (u != null) {
+                view.showMessage("Login exitoso");
+                view.dispose();
+                new MainView(u).setVisible(true);
+            } else {
+                view.showMessage("Credenciales incorrectas");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            view.showMessage("Error al verificar credenciales: " + e.getMessage());
         }
     }
 
@@ -49,7 +54,7 @@ public class LoginController {
         view.showMessage("Función de registro no implementada");
     }
 
-    public Usuario verificarCredenciales(String codigo, String contrasena) {
+    public Usuario verificarCredenciales(String codigo, String contrasena) throws SQLException {
         String sql = "SELECT * FROM Usuario WHERE codigo = ? AND contrasena = ?";
         try (PreparedStatement stmt = conexion.prepareStatement(sql)) {
             stmt.setString(1, codigo);
@@ -60,13 +65,13 @@ public class LoginController {
                 usuario.setId(rs.getInt("id"));
                 usuario.setCodigo(rs.getString("codigo"));
                 usuario.setNombre(rs.getString("nombre"));
-                usuario.setCorreo(rs.getString("email"));
+                usuario.setCorreo(rs.getString("email")); // Corregido de "correo" a "email"
                 usuario.setTelefono(rs.getString("telefono"));
                 usuario.setContrasena(rs.getString("contrasena"));
+                usuario.setRol(rs.getString("rol"));
+                usuario.setFechaRegistro(rs.getDate("fechaRegistro"));
                 return usuario;
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
         return null;
     }

@@ -1,11 +1,11 @@
-package com.universidad.biblioteca.view.panels;
+package com.universidad.biblioteca.vista.panels;
 
-import com.universidad.biblioteca.controller.LibroDAO;
-import com.universidad.biblioteca.controller.PrestamoDAO;
-import com.universidad.biblioteca.model.Libro;
-import com.universidad.biblioteca.model.Prestamo;
-import com.universidad.biblioteca.model.Usuario;
-import com.universidad.biblioteca.view.main.MainView;
+import com.universidad.biblioteca.controlador.LibroDAO;
+import com.universidad.biblioteca.controlador.PrestamoDAO;
+import com.universidad.biblioteca.modelo.Libro;
+import com.universidad.biblioteca.modelo.Prestamo;
+import com.universidad.biblioteca.modelo.Usuario;
+import com.universidad.biblioteca.vista.main.MainView;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -126,7 +126,7 @@ public class CatalogoPanel extends JPanel {
         }
 
         try {
-            Libro libro = libroDAO.obtenerLibroPorId(idLibro);
+            Libro libro = libroDAO.obtenerPorId(idLibro);
             if (libro != null && libro.isDisponible()) {
                 Prestamo prestamo = new Prestamo();
                 prestamo.setLibro(libro);
@@ -138,7 +138,7 @@ public class CatalogoPanel extends JPanel {
                 c.add(Calendar.DATE, 15); // 15 días de préstamo
                 prestamo.setFechaDevolucion(c.getTime());
 
-                if (prestamoDAO.crear(prestamo)) {
+                if (prestamoDAO.registrarPrestamo(prestamo)) {
                     libro.setDisponible(false);
                     libroDAO.actualizar(libro);
                     mainView.mostrarMensaje("Libro solicitado con éxito.", "Éxito", JOptionPane.INFORMATION_MESSAGE);

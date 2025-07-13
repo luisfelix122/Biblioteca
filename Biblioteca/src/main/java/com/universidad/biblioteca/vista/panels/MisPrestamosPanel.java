@@ -1,19 +1,16 @@
-package com.universidad.biblioteca.view.panels;
+package com.universidad.biblioteca.vista.panels;
 
-import com.universidad.biblioteca.controller.LibroDAO;
-import com.universidad.biblioteca.controller.PrestamoDAO;
-import com.universidad.biblioteca.model.Libro;
-import com.universidad.biblioteca.model.Prestamo;
-import com.universidad.biblioteca.model.Usuario;
-import com.universidad.biblioteca.view.main.MainView;
+import com.universidad.biblioteca.controlador.LibroDAO;
+import com.universidad.biblioteca.controlador.PrestamoDAO;
+import com.universidad.biblioteca.modelo.Prestamo;
+import com.universidad.biblioteca.modelo.Usuario;
+import com.universidad.biblioteca.vista.main.MainView;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.SQLException;
-import java.util.Date;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class MisPrestamosPanel extends JPanel {
 
@@ -40,8 +37,7 @@ public class MisPrestamosPanel extends JPanel {
     }
 
     private void initUI() {
-        modeloMisPrestamos = new DefaultTableModel(new String[]{"ID Préstamo", "Título", "Fecha Préstamo",
-                "Fecha Devolución", "Días Restantes", "Multa"}, 0) {
+        modeloMisPrestamos = new DefaultTableModel(new String[]{"ID Préstamo", "Libro", "Fecha Préstamo", "Fecha Devolución", "Multa", "Devuelto"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -55,9 +51,16 @@ public class MisPrestamosPanel extends JPanel {
         add(botonDevolver, BorderLayout.SOUTH);
 
         botonDevolver.addActionListener(e -> devolverLibro());
+
         tablaMisPrestamos.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-                botonDevolver.setEnabled(tablaMisPrestamos.getSelectedRow() != -1);
+                int selectedRow = tablaMisPrestamos.getSelectedRow();
+                if (selectedRow != -1) {
+                    boolean devuelto = (boolean) modeloMisPrestamos.getValueAt(selectedRow, 5);
+                    botonDevolver.setEnabled(!devuelto);
+                } else {
+                    botonDevolver.setEnabled(false);
+                }
             }
         });
     }
@@ -65,20 +68,19 @@ public class MisPrestamosPanel extends JPanel {
     public void cargarDatosMisPrestamos() {
         try {
             modeloMisPrestamos.setRowCount(0);
-            List<Prestamo> prestamos = prestamoDAO.obtenerPrestamosActivosPorUsuario(usuarioLogueado.getCodigo());
+            List<Prestamo> prestamos = prestamoDAO.obtenerPrestamosPorUsuario(usuarioLogueado.getCodigo());
             for (Prestamo prestamo : prestamos) {
-                long diasRestantes = calcularDiasRestantes(prestamo.getFechaDevolucion());
                 modeloMisPrestamos.addRow(new Object[]{
                         prestamo.getId(),
-                        prestamo.getLibro() != null ? prestamo.getLibro().getTitulo() : "",
+                        prestamo.getLibro() != null ? prestamo.getLibro().getTitulo() : "(Libro no disponible)",
                         prestamo.getFechaPrestamo(),
                         prestamo.getFechaDevolucion(),
-                        diasRestantes < 0 ? "Vencido" : diasRestantes,
-                        String.format("%.2f", prestamo.getMulta())
+                        prestamo.getMulta(),
+                        prestamo.isDevuelto()
                 });
             }
-        } catch (Exception e) {
-            mainView.mostrarError("Error al cargar los préstamos: " + e.getMessage());
+        } catch (SQLException e) {
+            mainView.mostrarError("Error al cargar mis préstamos: " + e.getMessage());
         }
     }
 
@@ -87,37 +89,39 @@ public class MisPrestamosPanel extends JPanel {
         if (filaSeleccionada == -1) return;
 
         int idPrestamo = (int) modeloMisPrestamos.getValueAt(filaSeleccionada, 0);
+        boolean devuelto = (boolean) modeloMisPrestamos.getValueAt(filaSeleccionada, 5);
+
+        if (devuelto) {
+            mainView.mostrarMensaje("Este libro ya ha sido devuelto.", "Información", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
 
         try {
             Prestamo prestamo = prestamoDAO.obtenerPrestamoPorId(idPrestamo);
             if (prestamo != null) {
-                double multa = 0;
-                long diasRestantes = calcularDiasRestantes(prestamo.getFechaDevolucion());
-                if (diasRestantes < 0) {
-                    multa = Math.abs(diasRestantes) * 1.5; // Ejemplo de multa
+                // Calcular multa si aplica (ejemplo simple: 1 día de retraso = 1 unidad de multa)
+                double multa = 0.0;
+                if (new java.util.Date().after(prestamo.getFechaDevolucion())) {
+                    long diff = new java.util.Date().getTime() - prestamo.getFechaDevolucion().getTime();
+                    long diffDays = diff / (24 * 60 * 60 * 1000);
+                    multa = diffDays * 1.0; // 1 unidad de multa por día de retraso
                 }
 
                 if (prestamoDAO.marcarComoDevuelto(idPrestamo, multa)) {
-                    Libro libro = prestamo.getLibro();
-                    libro.setDisponible(true);
-                    libroDAO.actualizar(libro);
-                    mainView.mostrarMensaje("Libro devuelto con éxito. Multa aplicada: S/ " + String.format("%.2f", multa),
-                            "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                    // Actualizar disponibilidad del libro
+                    prestamo.getLibro().setDisponible(true);
+                    libroDAO.actualizar(prestamo.getLibro());
+
+                    mainView.mostrarMensaje("Libro devuelto con éxito. Multa: " + String.format("%.2f", multa), "Éxito", JOptionPane.INFORMATION_MESSAGE);
                     cargarDatosMisPrestamos();
-                    mainView.cargarDatosHistorial();
                     mainView.getCatalogoPanel().cargarDatosCatalogo();
+                    mainView.cargarDatosHistorial();
                 } else {
-                    mainView.mostrarError("No se pudo procesar la devolución.");
+                    mainView.mostrarError("No se pudo marcar el préstamo como devuelto.");
                 }
             }
         } catch (SQLException e) {
             mainView.mostrarError("Error al devolver el libro: " + e.getMessage());
         }
-    }
-
-    private long calcularDiasRestantes(Date fechaDevolucion) {
-        if (fechaDevolucion == null) return 0;
-        long diff = fechaDevolucion.getTime() - new Date().getTime();
-        return TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
     }
 }

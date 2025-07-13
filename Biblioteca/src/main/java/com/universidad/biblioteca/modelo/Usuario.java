@@ -1,4 +1,4 @@
-package com.universidad.biblioteca.model;
+package com.universidad.biblioteca.modelo;
 
 import java.sql.Date;
 

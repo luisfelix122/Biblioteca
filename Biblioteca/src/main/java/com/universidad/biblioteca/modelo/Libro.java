@@ -1,4 +1,4 @@
-package com.universidad.biblioteca.model;
+package com.universidad.biblioteca.modelo;
 
 public class Libro {
     private int id;

@@ -1,7 +1,7 @@
-package com.universidad.biblioteca.view.auth;
+package com.universidad.biblioteca.vista.auth;
 
 import com.universidad.biblioteca.config.ConexionBD;
-import com.universidad.biblioteca.controller.LoginController;
+import com.universidad.biblioteca.controlador.LoginController;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -12,6 +12,7 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.sql.Connection;
+import java.sql.SQLException;
 
 public class LoginView extends JFrame {
 
@@ -39,6 +40,7 @@ public class LoginView extends JFrame {
                 g2d.setPaint(gp);
                 g2d.fillRect(0, 0, getWidth(), getHeight());
             }
+
         };
         mainPanel.setLayout(new BorderLayout());
         mainPanel.add(createFormPanel(), BorderLayout.CENTER);
@@ -199,13 +201,13 @@ public class LoginView extends JFrame {
         }
 
         EventQueue.invokeLater(() -> {
-            Connection conexion = ConexionBD.obtenerConexion();
-            if (conexion != null) {
+            try {
+                Connection conexion = ConexionBD.obtenerConexion();
                 LoginView view = new LoginView();
                 new LoginController(view, conexion);
                 view.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(null, "No se pudo conectar a la base de datos", "Error", JOptionPane.ERROR_MESSAGE);
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(null, "No se pudo conectar a la base de datos: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
     }

@@ -1,4 +1,4 @@
-package com.universidad.biblioteca.model;
+package com.universidad.biblioteca.modelo;
 
 import java.util.Date;
 
@@ -9,18 +9,20 @@ public class Prestamo {
     private Date fechaPrestamo;
     private Date fechaDevolucion;
     private double multa;
+    private boolean devuelto;
 
     // Constructor vacío
     public Prestamo() {}
 
     // Constructor completo
-    public Prestamo(int id, Usuario usuario, Libro libro, Date fechaPrestamo, Date fechaDevolucion, double multa) {
+    public Prestamo(int id, Usuario usuario, Libro libro, Date fechaPrestamo, Date fechaDevolucion, double multa, boolean devuelto) {
         this.id = id;
         this.usuario = usuario;
         this.libro = libro;
         this.fechaPrestamo = fechaPrestamo;
         this.fechaDevolucion = fechaDevolucion;
         this.multa = multa;
+        this.devuelto = devuelto;
     }
 
     // Getters y Setters
@@ -72,6 +74,14 @@ public class Prestamo {
         this.multa = multa;
     }
 
+    public boolean isDevuelto() {
+        return devuelto;
+    }
+
+    public void setDevuelto(boolean devuelto) {
+        this.devuelto = devuelto;
+    }
+
     // Opcional: para debug
     @Override
     public String toString() {
@@ -82,6 +92,7 @@ public class Prestamo {
                 ", fechaPrestamo=" + fechaPrestamo +
                 ", fechaDevolucion=" + fechaDevolucion +
                 ", multa=" + multa +
+                ", devuelto=" + devuelto +
                 '}';
     }
 }

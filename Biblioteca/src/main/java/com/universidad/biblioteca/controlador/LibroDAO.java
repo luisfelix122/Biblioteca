@@ -1,6 +1,6 @@
-package com.universidad.biblioteca.controller;
+package com.universidad.biblioteca.controlador;
 
-import com.universidad.biblioteca.model.Libro;
+import com.universidad.biblioteca.modelo.Libro;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,7 +57,7 @@ public class LibroDAO {
 
     // Actualizar disponibilidad del libro
     public boolean actualizar(Libro libro) throws SQLException {
-        String sql = "UPDATE Libro SET disponibles = ? WHERE isbn = ?";
+        String sql = "UPDATE Libro SET disponible = ? WHERE isbn = ?";
         try (PreparedStatement stmt = conexion.prepareStatement(sql)) {
             stmt.setInt(1, libro.isDisponible() ? 1 : 0);
             stmt.setInt(2, libro.getId());

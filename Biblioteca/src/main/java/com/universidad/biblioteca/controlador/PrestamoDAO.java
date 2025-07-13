@@ -1,44 +1,32 @@
-package com.universidad.biblioteca.controller;
+package com.universidad.biblioteca.controlador;
 
-import com.universidad.biblioteca.model.Prestamo;
-import com.universidad.biblioteca.model.Libro;
-import com.universidad.biblioteca.model.Usuario;
-import java.sql.*;
+import com.universidad.biblioteca.modelo.Libro;
+import com.universidad.biblioteca.modelo.Prestamo;
+import com.universidad.biblioteca.modelo.Usuario;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class PrestamoDAO {
-    private Connection conexion;
+
+    private final Connection conexion;
 
     public PrestamoDAO(Connection conexion) {
         this.conexion = conexion;
     }
 
-    public List<Prestamo> obtenerPrestamosActivosPorUsuario(String codigoUsuario) throws SQLException {
+    public List<Prestamo> obtenerTodos() throws SQLException {
         List<Prestamo> prestamos = new ArrayList<>();
-        String sql = "SELECT * FROM Prestamo WHERE codigoUsuario = ? AND devuelto = 0";
-        try (PreparedStatement stmt = conexion.prepareStatement(sql)) {
-            stmt.setString(1, codigoUsuario);
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    Prestamo prestamo = construirPrestamo(rs);
-                    prestamos.add(prestamo);
-                }
-            }
-        }
-        return prestamos;
-    }
-
-    public List<Prestamo> obtenerHistorialPrestamosPorUsuario(String codigoUsuario) throws SQLException {
-        List<Prestamo> prestamos = new ArrayList<>();
-        String sql = "SELECT * FROM Prestamo WHERE codigoUsuario = ?";
-        try (PreparedStatement stmt = conexion.prepareStatement(sql)) {
-            stmt.setString(1, codigoUsuario);
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    Prestamo prestamo = construirPrestamo(rs);
-                    prestamos.add(prestamo);
-                }
+        String sql = "SELECT * FROM Prestamo";
+        try (PreparedStatement stmt = conexion.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                Prestamo prestamo = construirPrestamo(rs);
+                prestamos.add(prestamo);
             }
         }
         return prestamos;
@@ -78,20 +66,34 @@ public class PrestamoDAO {
         }
     }
 
+    public List<Prestamo> obtenerPrestamosPorUsuario(String codigoUsuario) throws SQLException {
+        List<Prestamo> prestamos = new ArrayList<>();
+        String sql = "SELECT * FROM Prestamo WHERE codigoUsuario = ?";
+        try (PreparedStatement stmt = conexion.prepareStatement(sql)) {
+            stmt.setString(1, codigoUsuario);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    prestamos.add(construirPrestamo(rs));
+                }
+            }
+        }
+        return prestamos;
+    }
+
     private Prestamo construirPrestamo(ResultSet rs) throws SQLException {
         Prestamo prestamo = new Prestamo();
         prestamo.setId(rs.getInt("idPrestamo"));
         prestamo.setFechaPrestamo(rs.getTimestamp("fechaPrestamo"));
         prestamo.setFechaDevolucion(rs.getTimestamp("fechaDevolucion"));
         prestamo.setMulta(rs.getDouble("multa"));
+        prestamo.setDevuelto(rs.getBoolean("devuelto"));
 
         LibroDAO libroDAO = new LibroDAO(this.conexion);
-        // La columna es 'isbn'
         Libro libro = libroDAO.obtenerPorId(rs.getInt("isbn"));
         prestamo.setLibro(libro);
 
-        Usuario usuario = new Usuario();
-        usuario.setCodigo(rs.getString("codigoUsuario"));
+        UsuarioDAO usuarioDAO = new UsuarioDAO(this.conexion);
+        Usuario usuario = usuarioDAO.obtenerPorCodigo(rs.getString("codigoUsuario"));
         prestamo.setUsuario(usuario);
 
         return prestamo;

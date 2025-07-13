@@ -1,6 +1,6 @@
-package com.universidad.biblioteca.controller;
+package com.universidad.biblioteca.controlador;
 
-import com.universidad.biblioteca.model.Usuario;
+import com.universidad.biblioteca.modelo.Usuario;
 import java.sql.*;
 
 public class UsuarioDAO {
