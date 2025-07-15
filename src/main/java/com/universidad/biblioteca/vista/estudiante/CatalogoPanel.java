@@ -1,4 +1,4 @@
-package com.universidad.biblioteca.vista.panels;
+package com.universidad.biblioteca.vista.estudiante;
 
 import com.universidad.biblioteca.controlador.LibroDAO;
 import com.universidad.biblioteca.controlador.PrestamoDAO;

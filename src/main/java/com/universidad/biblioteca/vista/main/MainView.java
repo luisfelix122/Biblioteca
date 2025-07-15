@@ -3,11 +3,11 @@ import com.universidad.biblioteca.controlador.LibroDAO;
 import com.universidad.biblioteca.controlador.PrestamoDAO;
 
 import com.universidad.biblioteca.modelo.Usuario;
-import com.universidad.biblioteca.vista.panels.CatalogoPanel;
-import com.universidad.biblioteca.vista.panels.GestionLibrosPanel;
-import com.universidad.biblioteca.vista.panels.MisPrestamosPanel;
-import com.universidad.biblioteca.vista.panels.MiPerfilPanel;
-import com.universidad.biblioteca.vista.panels.HistorialPanel;
+import com.universidad.biblioteca.vista.estudiante.CatalogoPanel;
+import com.universidad.biblioteca.vista.bibliotecario.GestionLibrosPanel;
+import com.universidad.biblioteca.vista.estudiante.MisPrestamosPanel;
+import com.universidad.biblioteca.vista.estudiante.MiPerfilPanel;
+import com.universidad.biblioteca.vista.bibliotecario.HistorialPanel;
 import com.universidad.biblioteca.config.ConexionBD;
 
 import javax.swing.*;
