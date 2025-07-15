@@ -88,7 +88,7 @@ public class Prestamo {
         return "Prestamo{" +
                 "id=" + id +
                 ", usuario=" + (usuario != null ? usuario.getCodigo() : "null") +
-                ", libro=" + (libro != null ? libro.getId() : "null") +
+                ", libro=" + (libro != null ? libro.getIsbn() : "null") +
                 ", fechaPrestamo=" + fechaPrestamo +
                 ", fechaDevolucion=" + fechaDevolucion +
                 ", multa=" + multa +

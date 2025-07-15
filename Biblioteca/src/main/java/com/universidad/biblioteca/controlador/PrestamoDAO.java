@@ -12,7 +12,7 @@ public class PrestamoDAO {
 
     private static final String SELECT_ALL_PRESTAMOS = "SELECT * FROM Prestamo";
     private static final String SELECT_PRESTAMO_BY_ID = "SELECT * FROM Prestamo WHERE idPrestamo = ?";
-    private static final String INSERT_PRESTAMO = "INSERT INTO Prestamo (codigoUsuario, isbn, fechaPrestamo, fechaDevolucion, multa, devuelto) VALUES (?, ?, ?, ?, ?, 0)";
+    private static final String INSERT_PRESTAMO = "INSERT INTO Prestamo (codigoUsuario, isbn, fechaPrestamo, fechaDevolucion, multa, devuelto) VALUES (?, ?, ?, ?, ?, ?)";
     private static final String UPDATE_DEVOLUCION = "UPDATE Prestamo SET devuelto = 1, multa = ? WHERE idPrestamo = ?";
     private static final String SELECT_PRESTAMOS_BY_USUARIO = "SELECT * FROM Prestamo WHERE codigoUsuario = ?";
 
@@ -21,8 +21,9 @@ public class PrestamoDAO {
     private static final String COL_FECHA_DEVOLUCION = "fechaDevolucion";
     private static final String COL_MULTA = "multa";
     private static final String COL_DEVUELTO = "devuelto";
+
     private static final String COL_ISBN = "isbn";
-    private static final String COL_CODIGO_USUARIO = "codigoUsuario";
+     private static final String COL_CODIGO_USUARIO = "codigoUsuario";
 
     private final Connection conexion;
     private final LibroDAO libroDAO;
@@ -60,10 +61,11 @@ public class PrestamoDAO {
     public boolean registrarPrestamo(Prestamo prestamo) throws SQLException {
         try (PreparedStatement stmt = conexion.prepareStatement(INSERT_PRESTAMO)) {
             stmt.setString(1, prestamo.getUsuario().getCodigo());
-            stmt.setInt(2, prestamo.getLibro().getId());
+            stmt.setInt(2, prestamo.getLibro().getIsbn());
             stmt.setTimestamp(3, new java.sql.Timestamp(prestamo.getFechaPrestamo().getTime()));
             stmt.setTimestamp(4, new java.sql.Timestamp(prestamo.getFechaDevolucion().getTime()));
             stmt.setDouble(5, prestamo.getMulta());
+            stmt.setBoolean(6, prestamo.isDevuelto()); // Añadir el valor de 'devuelto'
             return stmt.executeUpdate() > 0;
         }
     }
