@@ -1,4 +1,4 @@
-package com.universidad.biblioteca.vista.panels;
+package com.universidad.biblioteca.vista.bibliotecario;
 import com.universidad.biblioteca.controlador.LibroDAO;
 import com.universidad.biblioteca.modelo.Libro;
 import com.universidad.biblioteca.vista.main.MainView;
@@ -8,6 +8,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.sql.SQLException;
+import com.universidad.biblioteca.vista.utils.RoundedBorder;
 public class GestionLibrosPanel extends JPanel {
     private static final Color BACKGROUND_COLOR = new Color(243, 244, 246);
     private static final Color FOREGROUND_COLOR = new Color(55, 65, 81);

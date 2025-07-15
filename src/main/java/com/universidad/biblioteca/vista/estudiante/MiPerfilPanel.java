@@ -1,4 +1,4 @@
-package com.universidad.biblioteca.vista.panels;
+package com.universidad.biblioteca.vista.estudiante;
 
 import com.universidad.biblioteca.modelo.Usuario;
 

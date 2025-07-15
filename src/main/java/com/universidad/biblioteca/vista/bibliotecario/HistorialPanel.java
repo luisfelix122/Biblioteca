@@ -1,4 +1,4 @@
-package com.universidad.biblioteca.vista.panels;
+package com.universidad.biblioteca.vista.bibliotecario;
 
 import com.universidad.biblioteca.controlador.PrestamoDAO;
 import com.universidad.biblioteca.modelo.Prestamo;
@@ -14,6 +14,7 @@ import java.awt.*;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import com.universidad.biblioteca.vista.utils.RoundedBorder;
 
 public class HistorialPanel extends JPanel {
 

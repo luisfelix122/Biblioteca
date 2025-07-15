@@ -1,4 +1,4 @@
-package com.universidad.biblioteca.vista.panels;
+package com.universidad.biblioteca.vista.estudiante;
 
 import com.universidad.biblioteca.controlador.LibroDAO;
 import com.universidad.biblioteca.controlador.PrestamoDAO;
@@ -16,6 +16,7 @@ import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import com.universidad.biblioteca.vista.utils.RoundedBorder;
 
 public class MisPrestamosPanel extends JPanel {
 
