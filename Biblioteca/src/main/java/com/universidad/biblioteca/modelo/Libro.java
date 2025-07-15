@@ -1,7 +1,7 @@
 package com.universidad.biblioteca.modelo;
 
 public class Libro {
-    private int id;
+    private int isbn;
     private String titulo;
     private String autor;
     private String categoria;
@@ -13,8 +13,8 @@ public class Libro {
     public Libro() {}
 
     // Constructor completo
-    public Libro(int id, String titulo, String autor, String categoria, String editorial, int anioPublicacion, boolean disponible) {
-        this.id = id;
+    public Libro(int isbn, String titulo, String autor, String categoria, String editorial, int anioPublicacion, boolean disponible) {
+        this.isbn = isbn;
         this.titulo = titulo;
         this.autor = autor;
         this.categoria = categoria;
@@ -24,12 +24,12 @@ public class Libro {
     }
 
     // Getters y Setters
-    public int getId() {
-        return id;
+    public int getIsbn() {
+        return isbn;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public void setIsbn(int isbn) {
+        this.isbn = isbn;
     }
 
     public String getTitulo() {
@@ -84,7 +84,7 @@ public class Libro {
     @Override
     public String toString() {
         return "Libro{" +
-                "id=" + id +
+                "isbn=" + isbn +
                 ", titulo='" + titulo + '\'' +
                 ", autor='" + autor + '\'' +
                 ", categoria='" + categoria + '\'' +

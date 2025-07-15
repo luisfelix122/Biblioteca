@@ -3,6 +3,8 @@ package com.universidad.biblioteca.controlador;
 import com.universidad.biblioteca.modelo.Usuario;
 import com.universidad.biblioteca.vista.main.MainView;
 import com.universidad.biblioteca.vista.auth.LoginView;
+import com.universidad.biblioteca.controlador.auth.RegisterController;
+import com.universidad.biblioteca.vista.auth.RegisterView;
 
 import java.sql.SQLException;
 
@@ -48,6 +50,8 @@ public class LoginController {
     }
 
     private void register() {
-        view.showMessage("Función de registro no implementada");
+        RegisterView registerView = new RegisterView();
+        new RegisterController(registerView, usuarioDAO);
+        registerView.setVisible(true);
     }
 }

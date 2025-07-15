@@ -1,19 +1,18 @@
 package com.universidad.biblioteca.vista.auth;
 
-import com.universidad.biblioteca.config.ConexionBD;
-import com.universidad.biblioteca.controlador.LoginController;
-import com.universidad.biblioteca.controlador.UsuarioDAO;
 
-import javax.swing.*;
+
+ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.geom.RoundRectangle2D;
-import java.sql.Connection;
-import java.sql.SQLException;
+
 
 public class LoginView extends JFrame {
 
@@ -23,15 +22,16 @@ public class LoginView extends JFrame {
     private JButton btnRegister;
 
     public LoginView() {
+        System.out.println("Creando LoginView...");
         init();
     }
 
     private void init() {
         setTitle("Sistema de Biblioteca Universitaria");
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
         setResizable(false);
         setSize(500, 700);
         setLocationRelativeTo(null);
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setContentPane(createMainPanel());
     }
 
@@ -63,7 +63,7 @@ public class LoginView extends JFrame {
 
         JPanel loginPanel = createLoginPanel();
 
-        JLabel footer = createLabel("© 2024 Universidad - Todos los derechos reservados", 12, new Color(255, 255, 255, 150));
+        JLabel footer = createLabel("© 2025 Luis Gonzales - Todos los derechos reservados", 12, new Color(255, 255, 255, 150));
 
         formPanel.add(Box.createVerticalStrut(60));
         formPanel.add(titleLabel);
@@ -99,7 +99,7 @@ public class LoginView extends JFrame {
         txtCodigo = createTextField("Código Universitario");
         txtPassword = createPasswordField("Contraseña");
 
-        btnLogin = createButton("INICIAR SESIÓN", new Color(67, 56, 202), Color.WHITE);
+        btnLogin = createButton("INICIAR SESIÓN", Color.WHITE, new Color(0, 102, 204));
         btnRegister = createButton("CREAR CUENTA", new Color(249, 250, 251), new Color(67, 56, 202));
 
         panel.add(formTitle);
@@ -112,6 +112,8 @@ public class LoginView extends JFrame {
         panel.add(Box.createVerticalStrut(15));
         panel.add(btnRegister);
 
+
+
         return panel;
     }
 
@@ -122,6 +124,7 @@ public class LoginView extends JFrame {
         label.setAlignmentX(Component.CENTER_ALIGNMENT);
         return label;
     }
+
 
     private JTextField createTextField(String placeholder) {
         JTextField field = new JTextField(placeholder);
@@ -144,6 +147,13 @@ public class LoginView extends JFrame {
         field.setBackground(new Color(249, 250, 251));
         field.setForeground(new Color(156, 163, 175));
 
+        field.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                validateField(field);
+            }
+        });
+
         field.addFocusListener(new FocusAdapter() {
             public void focusGained(FocusEvent e) {
                 if (field.getText().equals(placeholder)) {
@@ -163,28 +173,52 @@ public class LoginView extends JFrame {
                         ((JPasswordField) field).setEchoChar((char) 0);
                     }
                 }
+                validateField(field);
             }
         });
     }
 
-    private JButton createButton(String text, Color bg, Color fg) {
+
+
+    private void validateField(JTextComponent field) {
+        String text = "";
+        if (field instanceof JTextField) {
+            text = ((JTextField) field).getText();
+        }
+        if (field instanceof JPasswordField) {
+            text = new String(((JPasswordField) field).getPassword());
+        }
+
+        if (text.trim().isEmpty() || text.equals("Código Universitario") || text.equals("Contraseña")) {
+            field.setBorder(BorderFactory.createCompoundBorder(
+                    new LineBorder(Color.RED, 1, true),
+                    new EmptyBorder(12, 15, 12, 15)));
+        } else {
+            field.setBorder(BorderFactory.createCompoundBorder(
+                    new LineBorder(new Color(0, 102, 204), 1, true),
+                    new EmptyBorder(12, 15, 12, 15)));
+        }
+    }
+
+    private JButton createButton(String text, Color foreground, Color background) {
         JButton button = new JButton(text);
-        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        button.setForeground(fg);
-        button.setBackground(bg);
-        button.setBorder(new EmptyBorder(15, 25, 15, 25));
+        button.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        button.setBackground(background);
+        button.setForeground(foreground);
         button.setFocusPainted(false);
+        button.setBorder(new EmptyBorder(12, 0, 12, 0));
+        button.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+        button.setAlignmentX(Component.CENTER_ALIGNMENT);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return button;
     }
 
     public String getCodigo() {
-        return txtCodigo.getText().equals("Código Universitario") ? "" : txtCodigo.getText().trim();
+        return txtCodigo.getText();
     }
 
     public String getPassword() {
-        String text = String.valueOf(txtPassword.getPassword());
-        return text.equals("Contraseña") ? "" : text;
+        return new String(txtPassword.getPassword());
     }
 
     public JButton getBtnLogin() {
@@ -195,26 +229,8 @@ public class LoginView extends JFrame {
         return btnRegister;
     }
 
-    public void showMessage(String msg) {
-        JOptionPane.showMessageDialog(this, msg, "Información", JOptionPane.INFORMATION_MESSAGE);
+    public void showMessage(String message) {
+        JOptionPane.showMessageDialog(this, message);
     }
 
-    public static void main(String[] args) {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {
-        }
-
-        EventQueue.invokeLater(() -> {
-            try {
-                Connection conexion = ConexionBD.obtenerConexion();
-                LoginView view = new LoginView();
-                UsuarioDAO usuarioDAO = new UsuarioDAO(conexion);
-                new LoginController(view, usuarioDAO);
-                view.setVisible(true);
-            } catch (SQLException e) {
-                JOptionPane.showMessageDialog(null, "No se pudo conectar a la base de datos: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        });
-    }
 }

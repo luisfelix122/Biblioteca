@@ -1,14 +1,14 @@
 package com.universidad.biblioteca.vista.main;
-
-import com.universidad.biblioteca.config.ConexionBD;
 import com.universidad.biblioteca.controlador.LibroDAO;
 import com.universidad.biblioteca.controlador.PrestamoDAO;
-import com.universidad.biblioteca.controlador.UsuarioDAO;
+
 import com.universidad.biblioteca.modelo.Usuario;
 import com.universidad.biblioteca.vista.panels.CatalogoPanel;
-import com.universidad.biblioteca.vista.panels.HistorialPanel;
+import com.universidad.biblioteca.vista.panels.GestionLibrosPanel;
 import com.universidad.biblioteca.vista.panels.MisPrestamosPanel;
-import com.universidad.biblioteca.vista.panels.PerfilPanel;
+import com.universidad.biblioteca.vista.panels.MiPerfilPanel;
+import com.universidad.biblioteca.vista.panels.HistorialPanel;
+import com.universidad.biblioteca.config.ConexionBD;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,91 +17,109 @@ import java.sql.SQLException;
 
 public class MainView extends JFrame {
 
-    private final Usuario usuarioLogueado;
-    private final LibroDAO libroDAO;
-    private final PrestamoDAO prestamoDAO;
-    private final UsuarioDAO usuarioDAO;
+    private static final Color BACKGROUND_COLOR = new Color(243, 244, 246);
 
-    private JTabbedPane tabbedPane;
+    private Usuario usuarioLogueado;
     private CatalogoPanel catalogoPanel;
     private MisPrestamosPanel misPrestamosPanel;
+    private GestionLibrosPanel gestionLibrosPanel;
+    private MiPerfilPanel miPerfilPanel;
     private HistorialPanel historialPanel;
-    private PerfilPanel perfilPanel;
+    private Connection connection;
 
-    public MainView(Usuario usuario) throws SQLException {
+    public MainView(Usuario usuario) {
         this.usuarioLogueado = usuario;
-        Connection conexion = ConexionBD.obtenerConexion();
-        this.libroDAO = new LibroDAO(conexion);
-        this.prestamoDAO = new PrestamoDAO(conexion);
-        this.usuarioDAO = new UsuarioDAO(conexion);
-
-        initFrame();
-        initUI();
-    }
-
-    private void initFrame() {
-        setTitle("Sistema de Biblioteca Universitaria - Bienvenido, " + usuarioLogueado.getNombre());
-        setSize(1000, 700);
+        setTitle("Sistema de Gestión de Biblioteca - " + usuario.getNombre());
+        setSize(1024, 768);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-    }
+        getContentPane().setBackground(BACKGROUND_COLOR);
 
-    private void initUI() {
-        tabbedPane = new JTabbedPane();
+        try {
+            connection = ConexionBD.obtenerConexion();
+            // Inicializar DAOs
+            LibroDAO libroDAO = new LibroDAO(connection);
+            PrestamoDAO prestamoDAO = new PrestamoDAO(connection);
 
-        // Panel Catálogo
+
+        // Crear paneles
         catalogoPanel = new CatalogoPanel(this, libroDAO, prestamoDAO, usuarioLogueado);
-        tabbedPane.addTab("Catálogo de Libros", catalogoPanel);
-
-        // Panel Mis Préstamos
         misPrestamosPanel = new MisPrestamosPanel(this, prestamoDAO, libroDAO, usuarioLogueado);
-        tabbedPane.addTab("Mis Préstamos", misPrestamosPanel);
-
-        // Panel Historial de Préstamos
+        miPerfilPanel = new MiPerfilPanel(usuarioLogueado);
         historialPanel = new HistorialPanel(this, prestamoDAO, usuarioLogueado);
-        tabbedPane.addTab("Historial de Préstamos", historialPanel);
 
-        // Panel Mi Perfil
-        perfilPanel = new PerfilPanel(this, usuarioDAO, usuarioLogueado);
-        tabbedPane.addTab("Mi Perfil", perfilPanel);
+        // Configurar pestañas
+        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.setUI(new ModernTabbedPaneUI());
+        tabbedPane.addTab("Catálogo de Libros", catalogoPanel);
+        if ("ESTUDIANTE".equals(usuarioLogueado.getRol())) {
+            tabbedPane.addTab("Mis Préstamos", misPrestamosPanel);
+            tabbedPane.addTab("Historial", historialPanel);
+        }
 
-        tabbedPane.addChangeListener(e -> {
-            Component selectedComponent = tabbedPane.getSelectedComponent();
-            if (selectedComponent == catalogoPanel) {
-                catalogoPanel.cargarDatosCatalogo();
-            } else if (selectedComponent == misPrestamosPanel) {
-                misPrestamosPanel.cargarDatosMisPrestamos();
-            } else if (selectedComponent == historialPanel) {
-                historialPanel.cargarDatosHistorial();
-            } else if (selectedComponent == perfilPanel) {
-                perfilPanel.cargarDatosPerfil();
-            }
-        });
+        // Si es bibliotecario, añadir panel de gestión
+        if ("BIBLIOTECARIO".equals(usuarioLogueado.getRol())) {
+            gestionLibrosPanel = new GestionLibrosPanel(this, libroDAO);
+            tabbedPane.addTab("Gestión de Libros", gestionLibrosPanel);
+        }
 
-        add(tabbedPane);
+        tabbedPane.addTab("Mi Perfil", miPerfilPanel);
+
+        add(tabbedPane, BorderLayout.CENTER);
+
+        // Cargar datos iniciales
+        cargarMisPrestamos();
+
+        } catch (Exception e) {
+            mostrarError("Ocurrió un error inesperado al iniciar la aplicación: " + e.getMessage());
+            e.printStackTrace();
+            // Forzamos el cierre para evitar que la aplicación quede en un estado inconsistente
+            System.exit(1);
+        }
     }
 
-    public void cargarDatosHistorial() {
-        historialPanel.cargarDatosHistorial();
+    public void mostrarMensaje(String mensaje) {
+        JOptionPane.showMessageDialog(this, mensaje, "Información", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    public void mostrarMensaje(String mensaje, String titulo, int tipoMensaje) {
+        JOptionPane.showMessageDialog(this, mensaje, titulo, tipoMensaje);
     }
 
     public void mostrarError(String mensaje) {
-        mostrarMensaje(mensaje, "Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(this, mensaje, "Error", JOptionPane.ERROR_MESSAGE);
     }
 
-    public void mostrarMensaje(String mensaje, String titulo, int tipo) {
-        JOptionPane.showMessageDialog(this, mensaje, titulo, tipo);
-    }
-
-    public CatalogoPanel getCatalogoPanel() {
-        return catalogoPanel;
+    public void cargarMisPrestamos() {
+        if (misPrestamosPanel != null) {
+            misPrestamosPanel.cargarDatosMisPrestamos();
+        }
     }
 
     public MisPrestamosPanel getMisPrestamosPanel() {
         return misPrestamosPanel;
     }
 
-    public HistorialPanel getHistorialPanel() {
-        return historialPanel;
+    public CatalogoPanel getCatalogoPanel() {
+        return catalogoPanel;
+    }
+
+    public Usuario getUsuario() {
+        return usuarioLogueado;
+    }
+
+    public Connection getConnection() {
+        return connection;
+    }
+
+    @Override
+    public void dispose() {
+        super.dispose();
+        try {
+            ConexionBD.cerrarConexion();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            mostrarError("Error al cerrar la conexión con la base de datos.");
+        }
     }
 }

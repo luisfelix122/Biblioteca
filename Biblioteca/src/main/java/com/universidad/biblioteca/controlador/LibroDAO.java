@@ -7,9 +7,11 @@ import java.util.List;
 
 public class LibroDAO {
 
+    private static final String INSERT_LIBRO = "INSERT INTO Libro (titulo, autor, anioPublicacion, disponible) VALUES (?, ?, ?, ?)";
     private static final String SELECT_ALL_LIBROS = "SELECT * FROM Libro";
     private static final String SELECT_LIBRO_BY_ID = "SELECT * FROM Libro WHERE isbn = ?";
-    private static final String UPDATE_LIBRO = "UPDATE Libro SET disponibles = ? WHERE isbn = ?";
+    private static final String UPDATE_LIBRO = "UPDATE Libro SET titulo = ?, autor = ?, anioPublicacion = ? WHERE isbn = ?";
+    private static final String DELETE_LIBRO = "DELETE FROM Libro WHERE isbn = ?";
     private static final String SEARCH_LIBROS = "SELECT * FROM Libro WHERE titulo LIKE ? OR autor LIKE ?";
 
     private static final String COL_ISBN = "isbn";
@@ -49,11 +51,36 @@ public class LibroDAO {
         return null;
     }
 
-    public boolean actualizar(Libro libro) throws SQLException {
+    public void insertar(Libro libro) throws SQLException {
+        try (PreparedStatement stmt = conexion.prepareStatement(INSERT_LIBRO, Statement.RETURN_GENERATED_KEYS)) {
+            stmt.setString(1, libro.getTitulo());
+            stmt.setString(2, libro.getAutor());
+            stmt.setInt(3, libro.getAnioPublicacion());
+            stmt.setBoolean(4, libro.isDisponible());
+            stmt.executeUpdate();
+
+            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    libro.setIsbn(generatedKeys.getInt(1));
+                }
+            }
+        }
+    }
+
+    public void actualizar(Libro libro) throws SQLException {
         try (PreparedStatement stmt = conexion.prepareStatement(UPDATE_LIBRO)) {
-            stmt.setInt(1, libro.isDisponible() ? 1 : 0);
-            stmt.setInt(2, libro.getId());
-            return stmt.executeUpdate() > 0;
+            stmt.setString(1, libro.getTitulo());
+            stmt.setString(2, libro.getAutor());
+            stmt.setInt(3, libro.getAnioPublicacion());
+            stmt.setInt(4, libro.getIsbn());
+            stmt.executeUpdate();
+        }
+    }
+
+    public void eliminar(int id) throws SQLException {
+        try (PreparedStatement stmt = conexion.prepareStatement(DELETE_LIBRO)) {
+            stmt.setInt(1, id);
+            stmt.executeUpdate();
         }
     }
 
@@ -74,7 +101,7 @@ public class LibroDAO {
 
     private Libro mapResultSetToLibro(ResultSet rs) throws SQLException {
         Libro libro = new Libro();
-        libro.setId(rs.getInt(COL_ISBN));
+        libro.setIsbn(rs.getInt(COL_ISBN));
         libro.setTitulo(rs.getString(COL_TITULO));
         libro.setAutor(rs.getString(COL_AUTOR));
         libro.setCategoria(rs.getString(COL_CATEGORIA));
