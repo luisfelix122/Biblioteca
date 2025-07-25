@@ -2,6 +2,7 @@ package com.universidad.biblioteca.modelo;
 
 import java.sql.Date;
 
+
 public class Usuario {
     private int id;
     private String codigo;
@@ -9,13 +10,13 @@ public class Usuario {
     private String correo;
     private String telefono;
     private String contrasena;
-    private String rol;
+    private Role rol; // Este campo se usará para almacenar el nombre del rol
     private Date fechaRegistro;
 
     public Usuario() {}
 
     // Constructor completo puede ser útil
-    public Usuario(int id, String codigo, String nombre, String correo, String telefono, String contrasena, String rol, Date fechaRegistro) {
+    public Usuario(int id, String codigo, String nombre, String correo, String telefono, String contrasena, Role rol, Date fechaRegistro) {
         this.id = id;
         this.codigo = codigo;
         this.nombre = nombre;
@@ -52,12 +53,14 @@ public class Usuario {
         this.nombre = nombre;
     }
 
-    public String getCorreo() {
+
+
+    public String getEmail() {
         return correo;
     }
 
-    public void setCorreo(String correo) {
-        this.correo = correo;
+    public void setEmail(String email) {
+        this.correo = email;
     }
 
     public String getTelefono() {
@@ -76,11 +79,11 @@ public class Usuario {
         this.contrasena = contrasena;
     }
 
-    public String getRol() {
+    public Role getRol() {
         return rol;
     }
 
-    public void setRol(String rol) {
+    public void setRol(Role rol) {
         this.rol = rol;
     }
 
@@ -90,5 +93,9 @@ public class Usuario {
 
     public void setFechaRegistro(Date fechaRegistro) {
         this.fechaRegistro = fechaRegistro;
+    }
+
+    public String getUsername() {
+        return codigo;
     }
 }

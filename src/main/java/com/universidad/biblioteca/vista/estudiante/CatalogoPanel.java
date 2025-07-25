@@ -5,7 +5,7 @@ import com.universidad.biblioteca.controlador.PrestamoDAO;
 import com.universidad.biblioteca.modelo.Libro;
 import com.universidad.biblioteca.modelo.Prestamo;
 import com.universidad.biblioteca.modelo.Usuario;
-import com.universidad.biblioteca.vista.main.MainView;
+
 import com.universidad.biblioteca.vista.utils.RoundedBorder;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -15,12 +15,10 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
+
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
-import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -36,90 +34,134 @@ public class CatalogoPanel extends JPanel {
     private static final Color BORDER_COLOR = new Color(209, 213, 219);
     private static final Font TEXT_FONT = new Font("Segoe UI", Font.PLAIN, 14);
     private static final Font BUTTON_FONT = new Font("Segoe UI", Font.BOLD, 14);
+    private static final Color PRIMARY_BUTTON_COLOR = new Color(34, 197, 94);
+    private static final Color SECONDARY_BUTTON_COLOR = new Color(249, 115, 22);
 
-    private final MainView mainView;
+    private final com.universidad.biblioteca.vista.main.MainView mainView;
     private final LibroDAO libroDAO;
     private final PrestamoDAO prestamoDAO;
     private final Usuario usuarioLogueado;
 
     private JTable tablaCatalogo;
     private DefaultTableModel modeloCatalogo;
-    private TableRowSorter<DefaultTableModel> sorter;
+    private int totalPaginas = 1;
     private JTextField campoBusquedaTitulo;
     private JTextField campoBusquedaAutor;
     private JComboBox<String> comboDisponibilidad;
     private JButton botonSolicitar;
     private static final String[] TABLE_HEADERS = {"ISBN", "Título", "Autor", "Año", "Disponible"};
+    private int paginaActual = 1;
+    private static final int FILAS_POR_PAGINA = 15;
+    private JLabel labelPaginacion;
+    private JButton botonPrimera, botonAnterior, botonSiguiente, botonUltima;
 
 
-    public CatalogoPanel(MainView mainView, LibroDAO libroDAO, PrestamoDAO prestamoDAO, Usuario usuarioLogueado) {
+    public CatalogoPanel(com.universidad.biblioteca.vista.main.MainView mainView, LibroDAO libroDAO, PrestamoDAO prestamoDAO, Usuario usuarioLogueado) {
         this.mainView = mainView;
         this.libroDAO = libroDAO;
         this.prestamoDAO = prestamoDAO;
         this.usuarioLogueado = usuarioLogueado;
 
+        // Initialize pagination components here
+        labelPaginacion = new JLabel("Página 1");
+        botonPrimera = createStyledButton("|<", SECONDARY_BUTTON_COLOR, Color.WHITE);
+        botonAnterior = createStyledButton("<", SECONDARY_BUTTON_COLOR, Color.WHITE);
+        botonSiguiente = createStyledButton(">", SECONDARY_BUTTON_COLOR, Color.WHITE);
+        botonUltima = createStyledButton(">|", SECONDARY_BUTTON_COLOR, Color.WHITE);
+
         setLayout(new BorderLayout(20, 20));
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         setBackground(BACKGROUND_COLOR);
 
-        initUI();
-        cargarDatosCatalogo();
+        if (usuarioLogueado != null && ("Estudiante".equals(usuarioLogueado.getRol().getNombre()) || "Bibliotecario".equals(usuarioLogueado.getRol().getNombre()) || "Administrador".equals(usuarioLogueado.getRol().getNombre()))) {
+            initUI();
+
+        } else {
+            mostrarAccesoDenegado();
+        }
+    }
+
+    private void mostrarAccesoDenegado() {
+        removeAll();
+        setLayout(new GridBagLayout());
+        JLabel label = new JLabel("Acceso denegado. No tienes permiso para acceder a esta sección.");
+        label.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        label.setForeground(Color.RED);
+        add(label);
+        revalidate();
+        repaint();
     }
 
     private void initUI() {
-        // 1. Panel de Filtros y Búsqueda (Superior)
-        add(createFilterPanel(), BorderLayout.NORTH);
-
-        // 2. Tabla de Catálogo (Centro)
+        // 1. Tabla de Catálogo (Centro)
         add(createTablePanel(), BorderLayout.CENTER);
+
+        // 2. Panel de Filtros y Búsqueda (Superior)
+        add(createFilterPanel(), BorderLayout.NORTH);
 
         // 3. Panel de Acciones (Inferior)
         add(createActionsPanel(), BorderLayout.SOUTH);
     }
 
     private JPanel createFilterPanel() {
-        JPanel filterPanel = new JPanel();
-        filterPanel.setLayout(new BoxLayout(filterPanel, BoxLayout.X_AXIS));
+        JPanel filterPanel = new JPanel(new GridBagLayout());
         filterPanel.setBackground(BACKGROUND_COLOR);
-        filterPanel.setBorder(BorderFactory.createTitledBorder("Filtros y Búsqueda"));
+        filterPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder("Filtros y Búsqueda"),
+                new EmptyBorder(10, 10, 10, 10)
+        ));
+        // Apply RoundedBorder to the filter panel
+        filterPanel.setBorder(new RoundedBorder(BORDER_COLOR, 10));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
+        // Fila 1: Título y Autor
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        filterPanel.add(new JLabel("Título:"), gbc);
+
+        gbc.gridx = 1;
+        gbc.weightx = 1.0;
         campoBusquedaTitulo = createStyledTextField("Buscar por título...");
-        addPlaceholderStyle(campoBusquedaTitulo);
-        addFocusListener(campoBusquedaTitulo);
+        filterPanel.add(campoBusquedaTitulo, gbc);
 
+        gbc.gridx = 2;
+        gbc.weightx = 0.0;
+        filterPanel.add(new JLabel("Autor:"), gbc);
+
+        gbc.gridx = 3;
+        gbc.weightx = 1.0;
         campoBusquedaAutor = createStyledTextField("Buscar por autor...");
-        addPlaceholderStyle(campoBusquedaAutor);
-        addFocusListener(campoBusquedaAutor);
+        filterPanel.add(campoBusquedaAutor, gbc);
+
+        // Fila 2: Disponibilidad y botón de búsqueda
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.weightx = 0.0;
+        filterPanel.add(new JLabel("Disponibilidad:"), gbc);
+
+        gbc.gridx = 1;
+        gbc.weightx = 1.0;
         comboDisponibilidad = new JComboBox<>(new String[]{"Todos", "Disponibles", "No Disponibles"});
         styleComboBox(comboDisponibilidad);
+        filterPanel.add(comboDisponibilidad, gbc);
 
-        // Listener para búsqueda en tiempo real
-        DocumentListener documentListener = new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                filtrarCatalogo();
-            }
+        // Listeners para búsqueda en tiempo real
+        campoBusquedaTitulo.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { filtrarCatalogo(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { filtrarCatalogo(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { filtrarCatalogo(); }
+        });
+        campoBusquedaAutor.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { filtrarCatalogo(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { filtrarCatalogo(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { filtrarCatalogo(); }
+        });
+        comboDisponibilidad.addActionListener(_ -> filtrarCatalogo());
 
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                filtrarCatalogo();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                filtrarCatalogo();
-            }
-        };
-
-        campoBusquedaTitulo.getDocument().addDocumentListener(documentListener);
-        campoBusquedaAutor.getDocument().addDocumentListener(documentListener);
-        comboDisponibilidad.addActionListener(e -> filtrarCatalogo());
-
-        filterPanel.add(campoBusquedaTitulo);
-        filterPanel.add(Box.createHorizontalStrut(10));
-        filterPanel.add(campoBusquedaAutor);
-        filterPanel.add(Box.createHorizontalStrut(10));
-        filterPanel.add(comboDisponibilidad);
+        addFocusListener(campoBusquedaTitulo, "Buscar por título...");
+        addFocusListener(campoBusquedaAutor, "Buscar por autor...");
 
         return filterPanel;
     }
@@ -132,13 +174,10 @@ public class CatalogoPanel extends JPanel {
             }
         };
         tablaCatalogo = new JTable(modeloCatalogo);
-        sorter = new TableRowSorter<>(modeloCatalogo);
-        tablaCatalogo.setRowSorter(sorter);
-
         styleTable(tablaCatalogo);
 
-        tablaCatalogo.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
+        tablaCatalogo.getSelectionModel().addListSelectionListener(event -> {
+            if (!event.getValueIsAdjusting()) {
                 actualizarEstadoBotonSolicitar();
             }
         });
@@ -149,68 +188,127 @@ public class CatalogoPanel extends JPanel {
     }
 
     private JPanel createActionsPanel() {
-        JPanel actionsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        actionsPanel.setBackground(BACKGROUND_COLOR);
+        // Panel principal de acciones con BorderLayout
+        JPanel panelContenedor = new JPanel(new BorderLayout());
+        panelContenedor.setBackground(BACKGROUND_COLOR);
+        panelContenedor.setBorder(new EmptyBorder(10, 0, 0, 0));
 
-        botonSolicitar = createStyledButton("Solicitar Libro", new Color(34, 197, 94), Color.WHITE);
+        // Panel para los botones de la derecha (Solicitar, Exportar)
+        JPanel panelBotonesDerecha = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        panelBotonesDerecha.setBackground(BACKGROUND_COLOR);
+
+        botonSolicitar = createStyledButton("Solicitar Libro", PRIMARY_BUTTON_COLOR, Color.WHITE);
         botonSolicitar.setEnabled(false);
-        botonSolicitar.addActionListener(e -> solicitarLibro());
+        botonSolicitar.addActionListener(_ -> solicitarLibro());
 
-        if (!"BIBLIOTECARIO".equals(usuarioLogueado.getRol())) {
-            actionsPanel.add(botonSolicitar);
+        if (!"Bibliotecario".equals(usuarioLogueado.getRol().getNombre()) && !"Administrador".equals(usuarioLogueado.getRol().getNombre())) {
+            panelBotonesDerecha.add(botonSolicitar);
         }
 
-        JButton botonExportar = createStyledButton("Exportar a Excel", new Color(249, 115, 22), Color.WHITE);
-        botonExportar.addActionListener(e -> exportarCatalogoAExcel());
-        actionsPanel.add(botonExportar);
+        JButton botonExportar = createStyledButton("Exportar a Excel", SECONDARY_BUTTON_COLOR, Color.WHITE);
+        botonExportar.addActionListener(_ -> exportarCatalogoAExcel());
+        panelBotonesDerecha.add(botonExportar);
 
-        return actionsPanel;
+        // Panel para la paginación a la izquierda
+        JPanel panelPaginacion = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        panelPaginacion.setBackground(BACKGROUND_COLOR);
+
+        labelPaginacion.setFont(TEXT_FONT);
+
+        botonPrimera.addActionListener(_ -> {
+            paginaActual = 1;
+            actualizarCatalogo();
+        });
+        botonAnterior.addActionListener(_ -> {
+            if (paginaActual > 1) {
+                paginaActual--;
+                actualizarCatalogo();
+            }
+        });
+        botonSiguiente.addActionListener(_ -> {
+            if (paginaActual < totalPaginas) {
+                paginaActual++;
+                actualizarCatalogo();
+            }
+        });
+        botonUltima.addActionListener(_ -> {
+            paginaActual = totalPaginas;
+            actualizarCatalogo();
+        });
+
+        panelPaginacion.add(botonPrimera);
+        panelPaginacion.add(botonAnterior);
+        panelPaginacion.add(labelPaginacion);
+        panelPaginacion.add(botonSiguiente);
+        panelPaginacion.add(botonUltima);
+
+        // Añadir los paneles al contenedor principal
+        panelContenedor.add(panelPaginacion, BorderLayout.WEST);
+        panelContenedor.add(panelBotonesDerecha, BorderLayout.EAST);
+
+        return panelContenedor;
     }
 
     public void cargarDatosCatalogo() {
+        paginaActual = 1;
+        actualizarCatalogo();
+    }
+
+    private void actualizarCatalogo() {
+        java.sql.Connection conn = null;
         try {
-            List<Libro> libros = libroDAO.obtenerTodosLosLibros();
+            conn = com.universidad.biblioteca.config.ConexionBD.obtenerConexion();
+            conn.setAutoCommit(false);
+
+            String titulo = campoBusquedaTitulo.getText().trim();
+            String autor = campoBusquedaAutor.getText().trim();
+            String disponibilidad = (String) comboDisponibilidad.getSelectedItem();
+
+            if (titulo.equals("Buscar por título...")) {
+                titulo = "";
+            }
+            if (autor.equals("Buscar por autor...")) {
+                autor = "";
+            }
+
+            int totalLibros = libroDAO.contarLibros(conn, titulo, autor, disponibilidad);
+            actualizarControlesPaginacion(totalLibros);
+
+            List<Libro> libros = libroDAO.buscarLibrosPaginado(conn, titulo, autor, disponibilidad, (paginaActual - 1) * FILAS_POR_PAGINA, FILAS_POR_PAGINA);
             poblarTabla(libros);
+            conn.commit();
         } catch (SQLException e) {
+            try {
+                if (conn != null) {
+                    conn.rollback();
+                }
+            } catch (SQLException ex) {
+                mainView.mostrarError("Error al intentar revertir la transacción: " + ex.getMessage());
+            }
             mainView.mostrarError("Error al cargar el catálogo: " + e.getMessage());
         }
     }
 
+    private void actualizarControlesPaginacion(int totalLibros) {
+        totalPaginas = (int) Math.ceil((double) totalLibros / FILAS_POR_PAGINA);
+        if (totalPaginas == 0) {
+            totalPaginas = 1;
+        }
+
+        labelPaginacion.setText("Página " + paginaActual + " de " + totalPaginas);
+
+        if (botonPrimera == null) {
+            System.out.println("DEBUG: botonPrimera is null in actualizarControlesPaginacion");
+        }
+        botonPrimera.setEnabled(paginaActual > 1);
+        botonAnterior.setEnabled(paginaActual > 1);
+        botonSiguiente.setEnabled(paginaActual < totalPaginas);
+        botonUltima.setEnabled(paginaActual < totalPaginas);
+    }
+
     private void filtrarCatalogo() {
-        String titulo = campoBusquedaTitulo.getText().trim();
-        String autor = campoBusquedaAutor.getText().trim();
-        String disponibilidad = (String) comboDisponibilidad.getSelectedItem();
-
-        // Si los campos de texto tienen el texto de placeholder, se consideran vacíos
-        if (titulo.equals("Buscar por título...")) {
-            titulo = "";
-        }
-        if (autor.equals("Buscar por autor...")) {
-            autor = "";
-        }
-
-        try {
-            List<RowFilter<Object, Object>> filters = new java.util.ArrayList<>();
-
-            if (!titulo.isEmpty()) {
-                filters.add(RowFilter.regexFilter("(?i)" + titulo, 1));
-            }
-            if (!autor.isEmpty()) {
-                filters.add(RowFilter.regexFilter("(?i)" + autor, 2));
-            }
-            if (disponibilidad != null && !disponibilidad.equals("Todos")) {
-                String filtroDisponibilidad = disponibilidad.equals("Disponibles") ? "Sí" : "No";
-                filters.add(RowFilter.regexFilter(filtroDisponibilidad, 4));
-            }
-
-            if (filters.isEmpty()) {
-                sorter.setRowFilter(null); // Si no hay filtros, muestra toda la tabla
-            } else {
-                sorter.setRowFilter(RowFilter.andFilter(filters));
-            }
-        } catch (java.util.regex.PatternSyntaxException e) {
-            mainView.mostrarError("Error en el formato de búsqueda.");
-        }
+        paginaActual = 1;
+        actualizarCatalogo();
     }
 
     private void poblarTabla(List<Libro> libros) {
@@ -265,27 +363,21 @@ public class CatalogoPanel extends JPanel {
         return textField;
     }
 
-    private void addPlaceholderStyle(JTextField textField) {
+    private void addFocusListener(JTextField textField, String placeholder) {
         textField.setForeground(Color.GRAY);
-        textField.setFont(new Font("Segoe UI", Font.ITALIC, 14));
-    }
+        textField.setText(placeholder);
 
-    private void addFocusListener(JTextField textField) {
-        String placeholder = textField.getText();
         textField.addFocusListener(new java.awt.event.FocusAdapter() {
-            @Override
             public void focusGained(java.awt.event.FocusEvent e) {
                 if (textField.getText().equals(placeholder)) {
                     textField.setText("");
                     textField.setForeground(FOREGROUND_COLOR);
-                    textField.setFont(TEXT_FONT);
                 }
             }
 
-            @Override
             public void focusLost(java.awt.event.FocusEvent e) {
                 if (textField.getText().isEmpty()) {
-                    addPlaceholderStyle(textField);
+                    textField.setForeground(Color.GRAY);
                     textField.setText(placeholder);
                 }
             }
@@ -296,10 +388,14 @@ public class CatalogoPanel extends JPanel {
         int filaSeleccionada = tablaCatalogo.getSelectedRow();
         if (filaSeleccionada == -1) return;
 
-        int idLibro = (int) modeloCatalogo.getValueAt(tablaCatalogo.convertRowIndexToModel(filaSeleccionada), 0);
+        String idLibro = (String) modeloCatalogo.getValueAt(tablaCatalogo.convertRowIndexToModel(filaSeleccionada), 0);
 
+        java.sql.Connection conn = null;
         try {
-            Libro libro = libroDAO.obtenerPorId(idLibro);
+            conn = com.universidad.biblioteca.config.ConexionBD.obtenerConexion();
+            conn.setAutoCommit(false);
+
+            Libro libro = libroDAO.obtenerPorId(conn, idLibro);
             if (libro != null) {
                 if (!libro.isDisponible()) {
                     mainView.mostrarError("El libro seleccionado ya no está disponible. Refresca el catálogo.");
@@ -319,18 +415,26 @@ public class CatalogoPanel extends JPanel {
                 prestamo.setMulta(0.0);
                 prestamo.setDevuelto(false);
 
-                prestamoDAO.registrarPrestamo(prestamo);
+                prestamoDAO.registrarPrestamo(conn, prestamo);
                 libro.setDisponible(false);
-                libroDAO.actualizar(libro);
+                libroDAO.actualizar(conn, libro);
 
-                mainView.mostrarMensaje("Libro \"" + libro.getTitulo() + "\" solicitado con éxito.");
-                cargarDatosCatalogo(); // Refrescar la tabla
-                mainView.cargarMisPrestamos(); // Actualizar la vista de Mis Préstamos
+                conn.commit();
+            mainView.mostrarMensaje("Libro \"" + libro.getTitulo() + "\" solicitado con éxito.");
+            cargarDatosCatalogo(); // Refrescar la tabla
+            mainView.getMisPrestamosPanel().cargarDatosMisPrestamos(); // Actualizar la vista de Mis Préstamos
 
             } else {
                 mainView.mostrarError("Libro no encontrado.");
             }
         } catch (SQLException ex) {
+            try {
+                if (conn != null) {
+                    conn.rollback();
+                }
+            } catch (SQLException rollbackEx) {
+                mainView.mostrarError("Error al intentar revertir la transacción: " + rollbackEx.getMessage());
+            }
             mainView.mostrarError("Error al solicitar el libro: " + ex.getMessage());
         }
     }

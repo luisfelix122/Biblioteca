@@ -1,13 +1,10 @@
 package com.universidad.biblioteca.vista.auth;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
-import javax.swing.text.JTextComponent;
 import java.awt.*;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.awt.geom.RoundRectangle2D;
 
 public class RegisterView extends JFrame {
 
@@ -17,148 +14,207 @@ public class RegisterView extends JFrame {
     private JButton btnRegister;
 
     public RegisterView() {
+        setTitle("Sistema de Biblioteca Universitaria");
+        setSize(800, 600);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setResizable(false);
         init();
     }
 
     private void init() {
-        setTitle("Registro de Usuario");
-        setResizable(false);
-        setSize(500, 700);
-        setLocationRelativeTo(null);
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setContentPane(createMainPanel());
-    }
-
-    private JPanel createMainPanel() {
-        JPanel mainPanel = new JPanel(new BorderLayout()) {
+        // Panel principal con degradado
+        JPanel mainPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2d = (Graphics2D) g;
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                GradientPaint gp = new GradientPaint(0, 0, new Color(67, 56, 202), 0, getHeight(), new Color(139, 92, 246));
+                GradientPaint gp = new GradientPaint(
+                        0, 0, new Color(75, 0, 130), // Indigo
+                        0, getHeight(), new Color(138, 43, 226)); // BlueViolet
                 g2d.setPaint(gp);
                 g2d.fillRect(0, 0, getWidth(), getHeight());
             }
         };
-        mainPanel.add(createFormPanel(), BorderLayout.CENTER);
-        return mainPanel;
-    }
+        mainPanel.setLayout(new BorderLayout());
 
-    private JPanel createFormPanel() {
-        JPanel formPanel = new JPanel();
-        formPanel.setOpaque(false);
-        formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
-        formPanel.setBorder(new EmptyBorder(40, 50, 40, 50));
+        // Títulos principales
+        JPanel titlePanel = new JPanel();
+        titlePanel.setOpaque(false);
+        titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
+        titlePanel.setBorder(BorderFactory.createEmptyBorder(50, 0, 30, 0));
 
-        JLabel titleLabel = createLabel("Registro", 36, Color.WHITE);
-        JLabel subtitleLabel = createLabel("Crea una nueva cuenta", 16, new Color(255, 255, 255, 200));
+        JLabel mainTitle = new JLabel("BIBLIOTECA");
+        mainTitle.setFont(new Font("Arial", Font.BOLD, 48));
+        mainTitle.setForeground(Color.WHITE);
+        mainTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JPanel registerPanel = createRegisterPanel();
+        JLabel subTitle = new JLabel("Sistema de Gestión Universitaria");
+        subTitle.setFont(new Font("Arial", Font.PLAIN, 20));
+        subTitle.setForeground(Color.WHITE);
+        subTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel footer = createLabel("© 2025 Luis Gonzales - Todos los derechos reservados", 12, new Color(255, 255, 255, 150));
+        titlePanel.add(mainTitle);
+        titlePanel.add(subTitle);
+        mainPanel.add(titlePanel, BorderLayout.NORTH);
 
-        formPanel.add(Box.createVerticalStrut(60));
-        formPanel.add(titleLabel);
-        formPanel.add(Box.createVerticalStrut(5));
-        formPanel.add(subtitleLabel);
-        formPanel.add(Box.createVerticalStrut(40));
-        formPanel.add(registerPanel);
-        formPanel.add(Box.createVerticalGlue());
-        formPanel.add(footer);
-        formPanel.add(Box.createVerticalStrut(20));
-
-        return formPanel;
-    }
-
-    private JPanel createRegisterPanel() {
-        JPanel panel = new JPanel() {
+        // Panel central blanco con bordes redondeados
+        JPanel contentPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getBackground());
+                g2.fill(new RoundRectangle2D.Double(0, 0, getWidth() - 1, getHeight() - 1, 25, 25));
+                g2.dispose();
                 super.paintComponent(g);
-                Graphics2D g2d = (Graphics2D) g;
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2d.setColor(new Color(255, 255, 255));
-                g2d.fill(new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), 20, 20));
+            }
+
+            @Override
+            protected void paintBorder(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getForeground());
+                g2.draw(new RoundRectangle2D.Double(0, 0, getWidth() - 1, getHeight() - 1, 25, 25));
+                g2.dispose();
             }
         };
+        contentPanel.setBackground(Color.WHITE);
+        contentPanel.setForeground(new Color(200, 200, 200)); // Color del borde
+        contentPanel.setLayout(new GridBagLayout());
+        contentPanel.setPreferredSize(new Dimension(400, 450));
+        contentPanel.setMaximumSize(new Dimension(400, 450));
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        panel.setOpaque(false);
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(new EmptyBorder(40, 40, 40, 40));
-        panel.setMaximumSize(new Dimension(380, 400));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        JLabel formTitle = createLabel("Crear Cuenta", 24, new Color(51, 51, 51));
+        JLabel formTitle = new JLabel("Registro");
+        formTitle.setFont(new Font("Arial", Font.BOLD, 24));
+        formTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.CENTER;
+        contentPanel.add(formTitle, gbc);
 
-        txtUsuario = createTextField("Usuario");
-        txtPassword = createPasswordField("Contraseña");
-        txtConfirmPassword = createPasswordField("Confirmar Contraseña");
+        gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.WEST;
 
-        btnRegister = createButton("REGISTRARSE", Color.WHITE, new Color(67, 56, 202));
+        // Campos de texto
+        txtUsuario = createStyledTextField("Usuario");
+        txtPassword = createStyledPasswordField("Contraseña");
+        txtConfirmPassword = createStyledPasswordField("Confirmar Contraseña");
 
-        panel.add(formTitle);
-        panel.add(Box.createVerticalStrut(30));
-        panel.add(txtUsuario);
-        panel.add(Box.createVerticalStrut(20));
-        panel.add(txtPassword);
-        panel.add(Box.createVerticalStrut(20));
-        panel.add(txtConfirmPassword);
-        panel.add(Box.createVerticalStrut(30));
-        panel.add(btnRegister);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 2;
+        contentPanel.add(txtUsuario, gbc);
 
-        return panel;
+        gbc.gridy = 2;
+        contentPanel.add(txtPassword, gbc);
+
+        gbc.gridy = 3;
+        contentPanel.add(txtConfirmPassword, gbc);
+
+        // Botones
+        btnRegister = createStyledButton("REGISTRARSE", new Color(0, 123, 255)); // Azul fuerte
+
+        gbc.gridy = 4;
+        contentPanel.add(btnRegister, gbc);
+
+        JPanel centerPanel = new JPanel(new GridBagLayout());
+        centerPanel.setOpaque(false);
+        GridBagConstraints centerGbc = new GridBagConstraints();
+        centerGbc.gridx = 0;
+        centerGbc.gridy = 0;
+        centerGbc.weightx = 1.0;
+        centerGbc.weighty = 1.0;
+        centerGbc.anchor = GridBagConstraints.CENTER;
+        centerPanel.add(contentPanel, centerGbc);
+        mainPanel.add(centerPanel, BorderLayout.CENTER);
+
+        // Pie de página
+        JLabel footerLabel = new JLabel("© 2025 PROGRAMACIÓN II – Todos los derechos reservados.");
+        footerLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+        footerLabel.setForeground(Color.WHITE);
+        footerLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        footerLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 10, 0));
+        mainPanel.add(footerLabel, BorderLayout.SOUTH);
+
+        add(mainPanel);
     }
 
-    private JLabel createLabel(String text, int fontSize, Color color) {
-        JLabel label = new JLabel(text);
-        label.setFont(new Font("Segoe UI", Font.BOLD, fontSize));
-        label.setForeground(color);
-        label.setAlignmentX(Component.CENTER_ALIGNMENT);
-        return label;
-    }
-
-    private JTextField createTextField(String placeholder) {
-        JTextField field = new JTextField(placeholder);
-        styleField(field, placeholder);
-        return field;
-    }
-
-    private JPasswordField createPasswordField(String placeholder) {
-        JPasswordField field = new JPasswordField(placeholder);
-        styleField(field, placeholder);
-        field.setEchoChar((char) 0);
-        return field;
-    }
-
-    private void styleField(JTextComponent field, String placeholder) {
-        field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        field.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(229, 231, 235), 1, true),
-                new EmptyBorder(12, 15, 12, 15)));
-        field.setBackground(new Color(249, 250, 251));
-        field.setForeground(new Color(156, 163, 175));
-
-        field.addFocusListener(new FocusAdapter() {
+    private JTextField createStyledTextField(String placeholder) {
+        JTextField textField = new JTextField(placeholder);
+        textField.setFont(new Font("Arial", Font.PLAIN, 16));
+        textField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0, 123, 255), 2), // Borde azul
+                BorderFactory.createEmptyBorder(8, 10, 8, 10))); // Padding
+        textField.setPreferredSize(new Dimension(250, 40));
+        textField.setForeground(Color.GRAY); // Color del placeholder
+        textField.addFocusListener(new FocusAdapter() {
+            @Override
             public void focusGained(FocusEvent e) {
-                if (field.getText().equals(placeholder)) {
-                    field.setText("");
-                    field.setForeground(new Color(55, 65, 81));
-                    if (field instanceof JPasswordField) {
-                        ((JPasswordField) field).setEchoChar('•');
-                    }
+                if (textField.getText().equals(placeholder)) {
+                    textField.setText("");
+                    textField.setForeground(Color.BLACK); // Color del texto al escribir
                 }
             }
 
+            @Override
             public void focusLost(FocusEvent e) {
-                if (field.getText().isEmpty()) {
-                    field.setForeground(new Color(156, 163, 175));
-                    field.setText(placeholder);
-                    if (field instanceof JPasswordField) {
-                        ((JPasswordField) field).setEchoChar((char) 0);
-                    }
+                if (textField.getText().isEmpty()) {
+                    textField.setText(placeholder);
+                    textField.setForeground(Color.GRAY);
                 }
             }
         });
+        return textField;
+    }
+
+    private JPasswordField createStyledPasswordField(String placeholder) {
+        JPasswordField passwordField = new JPasswordField(placeholder);
+        passwordField.setFont(new Font("Arial", Font.PLAIN, 16));
+        passwordField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0, 123, 255), 2), // Borde azul
+                BorderFactory.createEmptyBorder(8, 10, 8, 10))); // Padding
+        passwordField.setPreferredSize(new Dimension(250, 40));
+        passwordField.setEchoChar((char) 0); // Para mostrar el placeholder
+        passwordField.setForeground(Color.GRAY);
+        passwordField.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                if (new String(passwordField.getPassword()).equals(placeholder)) {
+                    passwordField.setText("");
+                    passwordField.setEchoChar('•'); // Carácter de contraseña
+                    passwordField.setForeground(Color.BLACK);
+                }
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                if (new String(passwordField.getPassword()).isEmpty()) {
+                    passwordField.setEchoChar((char) 0);
+                    passwordField.setText(placeholder);
+                    passwordField.setForeground(Color.GRAY);
+                }
+            }
+        });
+        return passwordField;
+    }
+
+    private JButton createStyledButton(String text, Color bgColor) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Arial", Font.BOLD, 16));
+        button.setBackground(bgColor);
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        button.setPreferredSize(new Dimension(250, 45));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return button;
     }
 
     public JTextField getTxtUsuario() {
@@ -175,17 +231,5 @@ public class RegisterView extends JFrame {
 
     public JButton getBtnRegister() {
         return btnRegister;
-    }
-
-    private JButton createButton(String text, Color fg, Color bg) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        button.setForeground(fg);
-        button.setBackground(bg);
-        button.setFocusPainted(false);
-        button.setBorder(new EmptyBorder(12, 30, 12, 30));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setAlignmentX(Component.CENTER_ALIGNMENT);
-        return button;
     }
 }

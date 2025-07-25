@@ -1,236 +1,205 @@
 package com.universidad.biblioteca.vista.auth;
 
+import com.formdev.flatlaf.FlatLightLaf;
+import com.universidad.biblioteca.controlador.auth.LoginController;
+import org.jdesktop.swingx.prompt.PromptSupport;
 
-
- import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
-import javax.swing.text.JTextComponent;
+import javax.swing.*;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.geom.RoundRectangle2D;
-
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 
 public class LoginView extends JFrame {
 
-    private JTextField txtCodigo;
-    private JPasswordField txtPassword;
+    private JTextField usernameField;
+    private JPasswordField passwordField;
     private JButton btnLogin;
-    private JButton btnRegister;
+    private JButton btnCrear;
+    private JLabel appTitle;
+    private GridBagConstraints gbc;
+    private JPanel backgroundPanel;
 
     public LoginView() {
-        System.out.println("Creando LoginView...");
-        init();
-    }
+        try {
+            UIManager.setLookAndFeel(new FlatLightLaf());
+        } catch (UnsupportedLookAndFeelException e) {
+            e.printStackTrace();
+        }
 
-    private void init() {
         setTitle("Sistema de Biblioteca Universitaria");
+        setSize(980, 730);
         setResizable(false);
-        setSize(500, 700);
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setContentPane(createMainPanel());
-    }
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
 
-    private JPanel createMainPanel() {
-        JPanel mainPanel = new JPanel() {
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2d = (Graphics2D) g;
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                GradientPaint gp = new GradientPaint(0, 0, new Color(67, 56, 202), 0, getHeight(), new Color(139, 92, 246));
-                g2d.setPaint(gp);
-                g2d.fillRect(0, 0, getWidth(), getHeight());
-            }
+        // Garantiza transparencia del contenedor
+        if (getContentPane() instanceof JComponent) {
+            ((JComponent) getContentPane()).setOpaque(false);
+        }
 
-        };
-        mainPanel.setLayout(new BorderLayout());
-        mainPanel.add(createFormPanel(), BorderLayout.CENTER);
-        return mainPanel;
-    }
+        // Panel raíz con fondo degradado
+        backgroundPanel = new GradientPanel(new Color(0x4B0082), new Color(0x8000FF));
+        backgroundPanel.setLayout(new BorderLayout());
+        add(backgroundPanel, BorderLayout.CENTER);
 
-    private JPanel createFormPanel() {
-        JPanel formPanel = new JPanel();
-        formPanel.setOpaque(false);
-        formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
-        formPanel.setBorder(new EmptyBorder(40, 50, 40, 50));
+        // Copyright
+        JLabel copyrightLabel = new JLabel("© 2025 PROGRAM – Todos los derechos reservados");
+        copyrightLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        copyrightLabel.setForeground(Color.WHITE);
+        copyrightLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        copyrightLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0)); // airecito
+        backgroundPanel.add(copyrightLabel, BorderLayout.SOUTH);
 
-        JLabel titleLabel = createLabel("BIBLIOTECA", 36, Color.WHITE);
-        JLabel subtitleLabel = createLabel("Sistema de Gestión Universitaria", 16, new Color(255, 255, 255, 200));
+        // --- Contenedor Principal ---
+        JPanel mainContainer = new JPanel();
+        mainContainer.setOpaque(false);
+        mainContainer.setLayout(new BoxLayout(mainContainer, BoxLayout.Y_AXIS));
 
-        JPanel loginPanel = createLoginPanel();
+        // --- Encabezado ---
+        appTitle = new JLabel("BIBLIOTECA");
+        appTitle.setFont(new Font("SansSerif", Font.BOLD, 64));
+        appTitle.setForeground(Color.WHITE);
+        appTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel footer = createLabel("© 2025 Luis Gonzales - Todos los derechos reservados", 12, new Color(255, 255, 255, 150));
+        JLabel appSubtitle = new JLabel("Sistema de Gestión Universitaria");
+        appSubtitle.setFont(new Font("SansSerif", Font.PLAIN, 24));
+        appSubtitle.setForeground(Color.WHITE);
+        appSubtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        formPanel.add(Box.createVerticalStrut(60));
-        formPanel.add(titleLabel);
-        formPanel.add(Box.createVerticalStrut(5));
-        formPanel.add(subtitleLabel);
-        formPanel.add(Box.createVerticalStrut(40));
-        formPanel.add(loginPanel);
-        formPanel.add(Box.createVerticalGlue());
-        formPanel.add(footer);
-        formPanel.add(Box.createVerticalStrut(20));
+        mainContainer.add(appTitle);
+        mainContainer.add(appSubtitle);
+        mainContainer.add(Box.createRigidArea(new Dimension(0, 20))); // Margen inferior
 
-        return formPanel;
-    }
+        // --- Tarjeta de Login ---
+        RoundedShadowPanel loginCard = new RoundedShadowPanel();
+        loginCard.setLayout(new BoxLayout(loginCard, BoxLayout.Y_AXIS));
+        loginCard.setPreferredSize(new Dimension(380, 340));
+        loginCard.setMaximumSize(new Dimension(380, 340));
+        loginCard.setBackground(Color.WHITE);
+        loginCard.setOpaque(false);
 
-    private JPanel createLoginPanel() {
-        JPanel panel = new JPanel() {
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2d = (Graphics2D) g;
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2d.setColor(new Color(255, 255, 255));
-                g2d.fill(new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), 20, 20));
-            }
-        };
+        loginCard.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        panel.setOpaque(false);
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(new EmptyBorder(40, 40, 40, 40));
-        panel.setMaximumSize(new Dimension(380, 350));
+        JLabel cardTitle = new JLabel("Iniciar Sesión");
+        cardTitle.setFont(new Font("SansSerif", Font.BOLD, 28));
+        cardTitle.setForeground(new Color(0x333333));
+        cardTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+        loginCard.add(cardTitle);
 
-        JLabel formTitle = createLabel("Iniciar Sesión", 24, new Color(51, 51, 51));
+        loginCard.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        txtCodigo = createTextField("Código Universitario");
-        txtPassword = createPasswordField("Contraseña");
+        usernameField = new JTextField();
+        setupTextField(usernameField, "Usuario");
+        loginCard.add(usernameField);
 
-        btnLogin = createButton("INICIAR SESIÓN", Color.WHITE, new Color(0, 102, 204));
-        btnRegister = createButton("CREAR CUENTA", new Color(249, 250, 251), new Color(67, 56, 202));
+        loginCard.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        panel.add(formTitle);
-        panel.add(Box.createVerticalStrut(30));
-        panel.add(txtCodigo);
-        panel.add(Box.createVerticalStrut(20));
-        panel.add(txtPassword);
-        panel.add(Box.createVerticalStrut(30));
-        panel.add(btnLogin);
-        panel.add(Box.createVerticalStrut(15));
-        panel.add(btnRegister);
+        passwordField = new JPasswordField();
+        setupTextField(passwordField, "Contraseña");
+        loginCard.add(passwordField);
 
+        loginCard.add(Box.createRigidArea(new Dimension(0, 20)));
 
+        btnLogin = new JButton("INICIAR SESIÓN");
+        setupButton(btnLogin, new Color(0x007BFF));
+        loginCard.add(btnLogin);
 
-        return panel;
-    }
+        loginCard.add(Box.createRigidArea(new Dimension(0, 20)));
 
-    private JLabel createLabel(String text, int fontSize, Color color) {
-        JLabel label = new JLabel(text);
-        label.setFont(new Font("Segoe UI", Font.BOLD, fontSize));
-        label.setForeground(color);
-        label.setAlignmentX(Component.CENTER_ALIGNMENT);
-        return label;
-    }
+        btnCrear = new JButton("CREAR CUENTA");
+        setupButton(btnCrear, new Color(0x7200FF));
+        loginCard.add(btnCrear);
 
+        btnCrear.addActionListener(e -> {
+            CrearCuentaView registro = new CrearCuentaView();
+            registro.setLocationRelativeTo(null);
+            registro.setVisible(true);
+            this.dispose();
+        });
 
-    private JTextField createTextField(String placeholder) {
-        JTextField field = new JTextField(placeholder);
-        styleField(field, placeholder);
-        return field;
-    }
+        loginCard.add(Box.createRigidArea(new Dimension(0, 20)));
 
-    private JPasswordField createPasswordField(String placeholder) {
-        JPasswordField field = new JPasswordField(placeholder);
-        styleField(field, placeholder);
-        field.setEchoChar((char) 0);
-        return field;
-    }
+        mainContainer.add(loginCard);
 
-    private void styleField(JTextComponent field, String placeholder) {
-        field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        field.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(229, 231, 235), 1, true),
-                new EmptyBorder(12, 15, 12, 15)));
-        field.setBackground(new Color(249, 250, 251));
-        field.setForeground(new Color(156, 163, 175));
+        // Wrapper panel to center mainContainer in the BorderLayout
+        JPanel centerWrapper = new JPanel(new GridBagLayout());
+        centerWrapper.setOpaque(false);
+        gbc = new GridBagConstraints();
+        centerWrapper.add(mainContainer, gbc);
+        backgroundPanel.add(centerWrapper, BorderLayout.CENTER);
 
-        field.addKeyListener(new KeyAdapter() {
+        // --- Lógica de Responsividad ---
+        addComponentListener(new ComponentAdapter() {
             @Override
-            public void keyReleased(KeyEvent e) {
-                validateField(field);
+            public void componentResized(ComponentEvent e) {
+                int w = getWidth();
+                int size = Math.max(36, Math.min(64, w / 12));
+                appTitle.setFont(appTitle.getFont().deriveFont((float) size));
+
+                if (getHeight() < 600) {
+                    gbc.insets = new Insets(20, 0, 20, 0);
+                } else {
+                    gbc.insets = new Insets(0, 0, 0, 0);
+                }
+                backgroundPanel.revalidate();
+                backgroundPanel.repaint();
             }
         });
 
-        field.addFocusListener(new FocusAdapter() {
-            public void focusGained(FocusEvent e) {
-                if (field.getText().equals(placeholder)) {
-                    field.setText("");
-                    field.setForeground(new Color(55, 65, 81));
-                    if (field instanceof JPasswordField) {
-                        ((JPasswordField) field).setEchoChar('•');
-                    }
-                }
-            }
-
-            public void focusLost(FocusEvent e) {
-                if (field.getText().isEmpty()) {
-                    field.setForeground(new Color(156, 163, 175));
-                    field.setText(placeholder);
-                    if (field instanceof JPasswordField) {
-                        ((JPasswordField) field).setEchoChar((char) 0);
-                    }
-                }
-                validateField(field);
-            }
-        });
+        setVisible(true);
     }
 
-
-
-    private void validateField(JTextComponent field) {
-        String text = "";
-        if (field instanceof JTextField) {
-            text = ((JTextField) field).getText();
-        }
-        if (field instanceof JPasswordField) {
-            text = new String(((JPasswordField) field).getPassword());
-        }
-
-        if (text.trim().isEmpty() || text.equals("Código Universitario") || text.equals("Contraseña")) {
-            field.setBorder(BorderFactory.createCompoundBorder(
-                    new LineBorder(Color.RED, 1, true),
-                    new EmptyBorder(12, 15, 12, 15)));
-        } else {
-            field.setBorder(BorderFactory.createCompoundBorder(
-                    new LineBorder(new Color(0, 102, 204), 1, true),
-                    new EmptyBorder(12, 15, 12, 15)));
-        }
+    private void setupTextField(JTextField field, String placeholder) {
+        field.setPreferredSize(new Dimension(300, 44));
+        field.setMaximumSize(new Dimension(300, 44));
+        field.setAlignmentX(Component.CENTER_ALIGNMENT);
+        field.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(0xCCCCCC), 1, true),
+            BorderFactory.createEmptyBorder(0, 10, 0, 10)
+        ));
+        PromptSupport.setPrompt(placeholder, field);
+        PromptSupport.setForeground(new Color(0x9E9E9E), field);
     }
 
-    private JButton createButton(String text, Color foreground, Color background) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        button.setBackground(background);
-        button.setForeground(foreground);
-        button.setFocusPainted(false);
-        button.setBorder(new EmptyBorder(12, 0, 12, 0));
-        button.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+    private void setupButton(JButton button, Color background) {
+        button.setMaximumSize(new Dimension(300, 44));
         button.setAlignmentX(Component.CENTER_ALIGNMENT);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return button;
+        button.setBackground(background);
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                button.setBackground(background.darker());
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(background);
+            }
+        });
     }
 
-    public String getCodigo() {
-        return txtCodigo.getText();
+    public void setLoginController(LoginController controller) {
+        btnLogin.addActionListener(controller);
     }
 
-    public String getPassword() {
-        return new String(txtPassword.getPassword());
+    public void mostrarMensaje(String mensaje) {
+        JOptionPane.showMessageDialog(this, mensaje);
+    }
+
+    public JTextField getUsernameField() {
+        return usernameField;
+    }
+
+    public JPasswordField getPasswordField() {
+        return passwordField;
     }
 
     public JButton getBtnLogin() {
         return btnLogin;
     }
 
-    public JButton getBtnRegister() {
-        return btnRegister;
+    public JButton getBtnCrear() {
+        return btnCrear;
     }
-
-    public void showMessage(String message) {
-        JOptionPane.showMessageDialog(this, message);
-    }
-
 }

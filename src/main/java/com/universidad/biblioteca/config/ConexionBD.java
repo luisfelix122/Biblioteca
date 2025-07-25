@@ -10,12 +10,12 @@ import java.util.Properties;
 public final class ConexionBD {
 
     private static final Properties properties = new Properties();
-    private static Connection conexion = null;
+
 
     static {
         try (InputStream input = ConexionBD.class.getClassLoader().getResourceAsStream("database.properties")) {
             if (input == null) {
-                throw new IllegalStateException("No se encontró el archivo database.properties");
+                throw new RuntimeException("Error: No se pudo encontrar el archivo 'database.properties'. Asegúrese de que esté en la carpeta 'src/main/resources'.");
             }
             properties.load(input);
         } catch (IOException e) {
@@ -28,20 +28,22 @@ public final class ConexionBD {
     }
 
     public static Connection obtenerConexion() throws SQLException {
-        if (conexion == null || conexion.isClosed()) {
-            conexion = DriverManager.getConnection(
+        try {
+            System.out.println("Attempting to connect to the database...");
+            System.out.println("URL: " + properties.getProperty("db.url"));
+            Connection newConnection = DriverManager.getConnection(
                 properties.getProperty("db.url"),
                 properties.getProperty("db.usuario"),
                 properties.getProperty("db.contrasena")
             );
+            System.out.println("Database connection successful.");
+            return newConnection;
+        } catch (SQLException e) {
+            System.err.println("SQLException while connecting to the database: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
         }
-        return conexion;
     }
 
-    public static void cerrarConexion() throws SQLException {
-        if (conexion != null && !conexion.isClosed()) {
-            conexion.close();
-            conexion = null;
-        }
-    }
+
 }

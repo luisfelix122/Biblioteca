@@ -11,6 +11,8 @@ public class MiPerfilPanel extends JPanel {
 
     private static final Color BACKGROUND_COLOR = new Color(243, 244, 246);
     private static final Color FOREGROUND_COLOR = new Color(55, 65, 81);
+    private static final Color PRIMARY_BUTTON_COLOR = new Color(67, 56, 202);
+    private static final Font TITLE_FONT = new Font("Segoe UI", Font.BOLD, 24);
     private static final Font LABEL_FONT = new Font("Segoe UI", Font.BOLD, 16);
     private static final Font TEXT_FONT = new Font("Segoe UI", Font.PLAIN, 16);
     private static final Font BUTTON_FONT = new Font("Segoe UI", Font.BOLD, 14);
@@ -24,16 +26,45 @@ public class MiPerfilPanel extends JPanel {
         setBorder(new EmptyBorder(40, 60, 40, 60));
         setBackground(BACKGROUND_COLOR);
 
-        initUI();
+        if (usuario != null && ("Estudiante".equals(usuario.getRol().getNombre()) || "Bibliotecario".equals(usuario.getRol().getNombre()) || "Administrador".equals(usuario.getRol().getNombre()))) {
+            initUI();
+        } else {
+            mostrarAccesoDenegado();
+        }
+    }
+
+    private void mostrarAccesoDenegado() {
+        removeAll();
+        setLayout(new GridBagLayout());
+        JLabel label = new JLabel("Acceso denegado. No tienes permiso para acceder a esta sección.");
+        label.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        label.setForeground(Color.RED);
+        add(label);
+        revalidate();
+        repaint();
     }
 
     private void initUI() {
-        JPanel formPanel = new JPanel();
-        formPanel.setLayout(new GridBagLayout());
-        formPanel.setBackground(BACKGROUND_COLOR);
-        GridBagConstraints gbc = new GridBagConstraints();
+        // Panel principal que contendrá todo
+        JPanel mainPanel = new JPanel(new BorderLayout(20, 30));
+        mainPanel.setBackground(BACKGROUND_COLOR);
+        mainPanel.setBorder(new EmptyBorder(20, 100, 20, 100)); // Margen más amplio
 
-        gbc.insets = new Insets(10, 10, 10, 10);
+        // Título
+        JLabel titleLabel = new JLabel("Mi Perfil", SwingConstants.CENTER);
+        titleLabel.setFont(TITLE_FONT);
+        titleLabel.setForeground(FOREGROUND_COLOR);
+        mainPanel.add(titleLabel, BorderLayout.NORTH);
+
+        // Panel del formulario con la información
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        formPanel.setBackground(Color.WHITE);
+        formPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(209, 213, 219), 1, true),
+                new EmptyBorder(30, 40, 30, 40)
+        ));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(15, 10, 15, 10);
         gbc.anchor = GridBagConstraints.WEST;
 
         // Labels
@@ -41,41 +72,39 @@ public class MiPerfilPanel extends JPanel {
         gbc.gridy = 0;
         formPanel.add(createLabel("Nombre:"), gbc);
 
-
-
         gbc.gridy = 1;
         formPanel.add(createLabel("Código:"), gbc);
 
         gbc.gridy = 2;
         formPanel.add(createLabel("Rol:"), gbc);
 
-        // Fields (as labels, not editable)
+        // Fields
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.weightx = 1.0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         formPanel.add(createValueLabel(usuario.getNombre()), gbc);
 
-
-
         gbc.gridy = 1;
         formPanel.add(createValueLabel(usuario.getCodigo()), gbc);
 
         gbc.gridy = 2;
-        formPanel.add(createValueLabel(usuario.getRol()), gbc);
+        formPanel.add(createValueLabel(usuario.getRol().getNombre()), gbc);
 
-        // Change Password Button
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.gridwidth = 2;
-        gbc.anchor = GridBagConstraints.CENTER;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.insets = new Insets(30, 10, 10, 10);
-        JButton changePasswordButton = createStyledButton("Cambiar Contraseña", new Color(67, 56, 202), Color.WHITE);
-        changePasswordButton.addActionListener(e -> changePassword());
-        formPanel.add(changePasswordButton, gbc);
+        mainPanel.add(formPanel, BorderLayout.CENTER);
 
-        add(formPanel, BorderLayout.CENTER);
+        // Panel de botones
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        buttonPanel.setBackground(BACKGROUND_COLOR);
+        buttonPanel.setBorder(new EmptyBorder(20, 0, 0, 0));
+        JButton changePasswordButton = createStyledButton("Cambiar Contraseña", PRIMARY_BUTTON_COLOR, Color.WHITE);
+        changePasswordButton.addActionListener(_ -> changePassword());
+        buttonPanel.add(changePasswordButton);
+
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        // Añadir el panel principal al panel de la clase
+        add(mainPanel, BorderLayout.CENTER);
     }
 
     private JLabel createLabel(String text) {
@@ -89,6 +118,9 @@ public class MiPerfilPanel extends JPanel {
         JLabel label = new JLabel(text);
         label.setFont(TEXT_FONT);
         label.setForeground(new Color(107, 114, 128));
+        label.setBorder(new EmptyBorder(5, 10, 5, 10));
+        label.setOpaque(true);
+        label.setBackground(new Color(249, 250, 251));
         return label;
     }
 
