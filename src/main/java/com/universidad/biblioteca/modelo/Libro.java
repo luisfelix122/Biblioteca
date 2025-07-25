@@ -1,11 +1,10 @@
 package com.universidad.biblioteca.modelo;
 
 public class Libro {
-    private int isbn;
+    private String isbn;
     private String titulo;
     private String autor;
-    private String categoria;
-    private String editorial;
+
     private int anioPublicacion;
     private boolean disponible;
 
@@ -13,22 +12,21 @@ public class Libro {
     public Libro() {}
 
     // Constructor completo
-    public Libro(int isbn, String titulo, String autor, String categoria, String editorial, int anioPublicacion, boolean disponible) {
+    public Libro(String isbn, String titulo, String autor, int anioPublicacion, boolean disponible) {
         this.isbn = isbn;
         this.titulo = titulo;
         this.autor = autor;
-        this.categoria = categoria;
-        this.editorial = editorial;
+
         this.anioPublicacion = anioPublicacion;
         this.disponible = disponible;
     }
 
     // Getters y Setters
-    public int getIsbn() {
+    public String getIsbn() {
         return isbn;
     }
 
-    public void setIsbn(int isbn) {
+    public void setIsbn(String isbn) {
         this.isbn = isbn;
     }
 
@@ -48,21 +46,7 @@ public class Libro {
         this.autor = autor;
     }
 
-    public String getCategoria() {
-        return categoria;
-    }
 
-    public void setCategoria(String categoria) {
-        this.categoria = categoria;
-    }
-
-    public String getEditorial() {
-        return editorial;
-    }
-
-    public void setEditorial(String editorial) {
-        this.editorial = editorial;
-    }
 
     public int getAnioPublicacion() {
         return anioPublicacion;
@@ -87,8 +71,7 @@ public class Libro {
                 "isbn=" + isbn +
                 ", titulo='" + titulo + '\'' +
                 ", autor='" + autor + '\'' +
-                ", categoria='" + categoria + '\'' +
-                ", editorial='" + editorial + '\'' +
+
                 ", anioPublicacion=" + anioPublicacion +
                 ", disponible=" + disponible +
                 '}';

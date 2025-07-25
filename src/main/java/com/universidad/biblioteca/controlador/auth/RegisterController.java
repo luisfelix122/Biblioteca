@@ -1,7 +1,9 @@
 package com.universidad.biblioteca.controlador.auth;
 
 import com.universidad.biblioteca.controlador.UsuarioDAO;
+import com.universidad.biblioteca.modelo.Role;
 import com.universidad.biblioteca.modelo.Usuario;
+import com.universidad.biblioteca.utils.PasswordHasher;
 import com.universidad.biblioteca.vista.auth.RegisterView;
 
 import javax.swing.*;
@@ -12,14 +14,14 @@ public class RegisterController {
     private final RegisterView view;
     private final UsuarioDAO usuarioDAO;
 
-    public RegisterController(RegisterView view, UsuarioDAO usuarioDAO) {
+    public RegisterController(RegisterView view) {
         this.view = view;
-        this.usuarioDAO = usuarioDAO;
+        this.usuarioDAO = new UsuarioDAO();
         initController();
     }
 
     private void initController() {
-        view.getBtnRegister().addActionListener(e -> registerUser());
+        view.getBtnRegister().addActionListener(_ -> registerUser());
     }
 
     private void registerUser() {
@@ -45,8 +47,14 @@ public class RegisterController {
 
             Usuario newUser = new Usuario();
             newUser.setCodigo(username);
-            newUser.setContrasena(password);
-            newUser.setRol("ESTUDIANTE"); // Rol por defecto
+            newUser.setNombre(username); // Usar username como nombre por defecto
+            newUser.setEmail(""); // Valor por defecto
+            newUser.setTelefono(""); // Valor por defecto
+            String hashedPassword = PasswordHasher.hashPassword(password);
+            newUser.setContrasena(hashedPassword);
+            Role rol = new Role();
+            rol.setId(3); // Rol por defecto para Estudiante
+            newUser.setRol(rol);
 
             if (usuarioDAO.insertar(newUser)) {
                 JOptionPane.showMessageDialog(view, "Usuario registrado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);

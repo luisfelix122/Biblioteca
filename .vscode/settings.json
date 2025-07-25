@@ -5,5 +5,13 @@
       "path": "C:\\Program Files\\Java\\jdk-23",
       "default": true
     }
-  ]
+  ],
+  "editor.inlineSuggest.enabled": true,
+  "github.copilot.inlineSuggest.enable": true,
+  "editor.tabCompletion": "on",
+  "editor.suggest.preview": true,
+  "editor.acceptSuggestionOnEnter": "on",
+  "editor.inlineSuggest.suppressSuggestions": false,
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "java.debug.settings.onBuildFailureProceed": true
 }

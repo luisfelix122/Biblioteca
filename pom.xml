@@ -18,7 +18,7 @@
   <properties>
     <!-- Para compilar a Java 23 -->
     <maven.compiler.source>23</maven.compiler.source>
-    <maven.compiler.target>23</maven.compiler.target>
+        <maven.compiler.target>23</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
@@ -41,31 +41,90 @@
     <dependency>
         <groupId>com.itextpdf</groupId>
         <artifactId>kernel</artifactId>
-        <version>7.2.5</version>
+        <version>7.1.15</version>
     </dependency>
     <dependency>
         <groupId>com.itextpdf</groupId>
         <artifactId>layout</artifactId>
-        <version>7.2.5</version>
+        <version>7.1.15</version>
     </dependency>
+
+
     <dependency>
         <groupId>com.itextpdf</groupId>
         <artifactId>io</artifactId>
-        <version>7.2.5</version>
+        <version>7.1.15</version>
     </dependency>
 
-    <!-- SLF4J for iText logging -->
+    <!-- https://mvnrepository.com/artifact/org.swinglabs.swingx/swingx-all -->
     <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-simple</artifactId>
-        <version>1.7.32</version>
+      <groupId>org.swinglabs.swingx</groupId>
+      <artifactId>swingx-all</artifactId>
+      <version>1.6.4</version>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/com.formdev/flatlaf -->
+    <dependency>
+      <groupId>com.formdev</groupId>
+      <artifactId>flatlaf</artifactId>
+      <version>3.4</version>
+    </dependency>
+
+
+
+    <!-- JFreeChart for professional-looking charts -->
+    <dependency>
+      <groupId>org.jfree</groupId>
+      <artifactId>jfreechart</artifactId>
+      <version>1.5.3</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jfree</groupId>
+      <artifactId>jcommon</artifactId>
+      <version>1.0.24</version>
     </dependency>
   </dependencies>
   
 
   <build>
-
+    <resources>
+      <resource>
+        <directory>src/main/java</directory>
+        <includes>
+          <include>**/*.properties</include>
+          <include>**/*.xml</include>
+          <include>**/*.fxml</include>
+          <include>**/*.png</include>
+          <include>**/*.jpg</include>
+          <include>**/*.gif</include>
+          <include>**/*.css</include>
+        </includes>
+      </resource>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+    </resources>
     <plugins>
+      <!-- Plugin para añadir directorios de fuentes adicionales -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.3.0</version>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${project.basedir}/src/main/java/com/universidad/biblioteca/controlador/auth</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <!-- Plugin de compilación -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -75,6 +134,12 @@
           <source>23</source>
           <target>23</target>
           <encoding>UTF-8</encoding>
+          <compilerArgs>
+            <arg>-parameters</arg>
+          </compilerArgs>
+          <compileSourceRoots>
+            <compileSourceRoot>${project.basedir}/src/main/java</compileSourceRoot>
+          </compileSourceRoots>
         </configuration>
       </plugin>
       
@@ -82,7 +147,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
-        <version>3.1.0</version>
+        <version>3.2.0</version>
         <configuration>
           <mainClass>com.universidad.biblioteca.App</mainClass>
         </configuration>
@@ -131,12 +196,15 @@
         <configuration>
           <archive>
             <manifest>
+              <addClasspath>true</addClasspath>
               <mainClass>com.universidad.biblioteca.App</mainClass>
             </manifest>
           </archive>
           <descriptorRefs>
             <descriptorRef>jar-with-dependencies</descriptorRef>
           </descriptorRefs>
+          <appendAssemblyId>false</appendAssemblyId>
+          <finalName>${project.artifactId}-${project.version}-full</finalName>
         </configuration>
         <executions>
           <execution>

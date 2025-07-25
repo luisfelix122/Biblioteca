@@ -4,7 +4,6 @@ import com.universidad.biblioteca.controlador.LibroDAO;
 import com.universidad.biblioteca.controlador.PrestamoDAO;
 import com.universidad.biblioteca.modelo.Prestamo;
 import com.universidad.biblioteca.modelo.Usuario;
-import com.universidad.biblioteca.vista.main.MainView;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -23,12 +22,13 @@ public class MisPrestamosPanel extends JPanel {
     private static final Color BACKGROUND_COLOR = new Color(243, 244, 246);
     private static final Color FOREGROUND_COLOR = new Color(55, 65, 81);
     private static final Color BORDER_COLOR = new Color(209, 213, 219);
+    private static final Color PRIMARY_BUTTON_COLOR = new Color(67, 56, 202);
     private static final Font TEXT_FONT = new Font("Segoe UI", Font.PLAIN, 14);
     private static final Font BOLD_FONT = new Font("Segoe UI", Font.BOLD, 14);
     private static final Font BUTTON_FONT = new Font("Segoe UI", Font.BOLD, 14);
 
     private static final String[] TABLE_HEADERS = {"ID Préstamo", "Libro", "Fecha Préstamo", "Fecha Devolución", "Multa", "Devuelto"};
-    private final MainView mainView;
+    private final com.universidad.biblioteca.vista.main.MainView mainView;
     private final PrestamoDAO prestamoDAO;
     private final LibroDAO libroDAO;
     private final Usuario usuarioLogueado;
@@ -37,7 +37,7 @@ public class MisPrestamosPanel extends JPanel {
     private JButton botonDevolver;
     private JLabel labelPrestamosActivos, labelProximoVencimiento;
 
-    public MisPrestamosPanel(MainView mainView, PrestamoDAO prestamoDAO, LibroDAO libroDAO, Usuario usuarioLogueado) {
+    public MisPrestamosPanel(com.universidad.biblioteca.vista.main.MainView mainView, PrestamoDAO prestamoDAO, LibroDAO libroDAO, Usuario usuarioLogueado) {
         this.mainView = mainView;
         this.prestamoDAO = prestamoDAO;
         this.libroDAO = libroDAO;
@@ -47,8 +47,23 @@ public class MisPrestamosPanel extends JPanel {
         setBorder(new EmptyBorder(20, 20, 20, 20));
         setBackground(BACKGROUND_COLOR);
 
-        initUI();
-        cargarDatosMisPrestamos();
+        if (usuarioLogueado != null && "Estudiante".equals(usuarioLogueado.getRol().getNombre())) {
+            initUI();
+            cargarDatosMisPrestamos();
+        } else {
+            mostrarAccesoDenegado();
+        }
+    }
+
+    private void mostrarAccesoDenegado() {
+        removeAll();
+        setLayout(new GridBagLayout());
+        JLabel label = new JLabel("Acceso denegado. No tienes permiso para acceder a esta sección.");
+        label.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        label.setForeground(Color.RED);
+        add(label);
+        revalidate();
+        repaint();
     }
 
     private void initUI() {
@@ -63,15 +78,22 @@ public class MisPrestamosPanel extends JPanel {
     }
 
     private JPanel createStatsPanel() {
-        JPanel statsPanel = new JPanel(new GridLayout(1, 2, 20, 0));
-        statsPanel.setBorder(new EmptyBorder(10, 10, 20, 10));
+        JPanel statsPanel = new JPanel(new GridBagLayout());
+        statsPanel.setBorder(new EmptyBorder(10, 0, 20, 0));
+        statsPanel.setBorder(new RoundedBorder(BORDER_COLOR, 10));
         statsPanel.setBackground(BACKGROUND_COLOR);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(0, 10, 0, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 0.5;
 
         labelPrestamosActivos = createStatLabel("Préstamos Activos: 0");
-        statsPanel.add(labelPrestamosActivos);
+        gbc.gridx = 0;
+        statsPanel.add(labelPrestamosActivos, gbc);
 
         labelProximoVencimiento = createStatLabel("Próximo Vencimiento: N/A");
-        statsPanel.add(labelProximoVencimiento);
+        gbc.gridx = 1;
+        statsPanel.add(labelProximoVencimiento, gbc);
 
         return statsPanel;
     }
@@ -84,10 +106,13 @@ public class MisPrestamosPanel extends JPanel {
     private JPanel createActionsPanel() {
         JPanel actionsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         actionsPanel.setBackground(BACKGROUND_COLOR);
-        botonDevolver = createStyledButton("Devolver Libro Seleccionado", new Color(67, 56, 202), Color.WHITE);
+        actionsPanel.setBorder(new EmptyBorder(10, 0, 0, 0));
+
+        botonDevolver = createStyledButton("Devolver Libro Seleccionado", PRIMARY_BUTTON_COLOR, Color.WHITE);
         botonDevolver.setEnabled(false);
-        botonDevolver.addActionListener(e -> devolverLibro());
+        botonDevolver.addActionListener(_ -> devolverLibro());
         actionsPanel.add(botonDevolver);
+
         return actionsPanel;
     }
 
@@ -122,9 +147,13 @@ public class MisPrestamosPanel extends JPanel {
     }
 
     public void cargarDatosMisPrestamos() {
+        java.sql.Connection conn = null;
         try {
+            conn = com.universidad.biblioteca.config.ConexionBD.obtenerConexion();
+            conn.setAutoCommit(false);
+
             modeloMisPrestamos.setRowCount(0);
-            List<Prestamo> prestamos = prestamoDAO.obtenerPrestamosPorUsuario(usuarioLogueado.getCodigo());
+            List<Prestamo> prestamos = prestamoDAO.obtenerPrestamosPorUsuario(conn, usuarioLogueado.getCodigo());
             int prestamosActivos = 0;
             Date proximoVencimiento = null;
 
@@ -151,8 +180,13 @@ public class MisPrestamosPanel extends JPanel {
             } else {
                 labelProximoVencimiento.setText("Próximo Vencimiento: N/A");
             }
-
+            conn.commit();
         } catch (SQLException e) {
+            try {
+                conn.rollback();
+            } catch (SQLException ex) {
+                mainView.mostrarError("Error al intentar revertir la transacción: " + ex.getMessage());
+            }
             mainView.mostrarError("Error al cargar mis préstamos: " + e.getMessage());
         }
     }
@@ -169,8 +203,12 @@ public class MisPrestamosPanel extends JPanel {
             return;
         }
 
+        java.sql.Connection conn = null;
         try {
-            Prestamo prestamo = prestamoDAO.obtenerPrestamoPorId(idPrestamo);
+            conn = com.universidad.biblioteca.config.ConexionBD.obtenerConexion();
+            conn.setAutoCommit(false);
+
+            Prestamo prestamo = prestamoDAO.obtenerPrestamoPorId(conn, idPrestamo);
             if (prestamo != null) {
                 // Calcular multa si aplica
                 double multa = 0.0;
@@ -181,19 +219,28 @@ public class MisPrestamosPanel extends JPanel {
                     multa = diffDays * 1.0; // 1 unidad de multa por día de retraso
                 }
 
-                if (prestamoDAO.marcarComoDevuelto(idPrestamo, multa)) {
+                if (prestamoDAO.marcarComoDevuelto(conn, idPrestamo, multa)) {
                     // Actualizar disponibilidad del libro
                     prestamo.getLibro().setDisponible(true);
-                    libroDAO.actualizar(prestamo.getLibro());
+                    libroDAO.actualizar(conn, prestamo.getLibro());
 
+                    conn.commit();
                     mainView.mostrarMensaje("Libro devuelto con éxito. Multa: " + String.format("%.2f", multa), "Éxito", JOptionPane.INFORMATION_MESSAGE);
                     cargarDatosMisPrestamos();
                     mainView.getCatalogoPanel().cargarDatosCatalogo();
                 } else {
+                    conn.rollback();
                     mainView.mostrarError("No se pudo marcar el préstamo como devuelto.");
                 }
+            } else {
+                conn.rollback();
             }
         } catch (SQLException e) {
+            try {
+                conn.rollback();
+            } catch (SQLException ex) {
+                mainView.mostrarError("Error al intentar revertir la transacción: " + ex.getMessage());
+            }
             mainView.mostrarError("Error al devolver el libro: " + e.getMessage());
         }
     }
@@ -243,36 +290,52 @@ public class MisPrestamosPanel extends JPanel {
 
     // Clase interna para renderizar las celdas con colores
     private static class PrestamoCellRenderer extends DefaultTableCellRenderer {
-        private static final Color COLOR_VENCIDO = new Color(255, 204, 204); // Rojo claro
-        private static final Color COLOR_PROXIMO_VENCER = new Color(255, 255, 204); // Amarillo claro
-        private static final Color COLOR_DEVUELTO = new Color(204, 255, 204); // Verde claro
+        private static final Color COLOR_VENCIDO = new Color(254, 226, 226); // Rojo claro
+        private static final Color COLOR_PROXIMO_VENCER = new Color(254, 249, 195); // Amarillo claro
+        private static final Color COLOR_DEVUELTO = new Color(220, 252, 231); // Verde claro
+        private static final Color COLOR_VENCIDO_FG = new Color(159, 28, 28);
+        private static final Color COLOR_PROXIMO_VENCER_FG = new Color(133, 77, 14);
+        private static final Color COLOR_DEVUELTO_FG = new Color(21, 101, 52);
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            setBorder(new EmptyBorder(5, 10, 5, 10));
+
+            if (isSelected) {
+                c.setBackground(table.getSelectionBackground());
+                c.setForeground(table.getSelectionForeground());
+                return c;
+            }
 
             boolean devuelto = (boolean) table.getModel().getValueAt(row, 5);
             Date fechaDevolucion = (Date) table.getModel().getValueAt(row, 3);
 
             if (!devuelto) {
                 Date hoy = new Date();
-                if (hoy.after(fechaDevolucion)) {
+                if (fechaDevolucion != null && hoy.after(fechaDevolucion)) {
                     c.setBackground(COLOR_VENCIDO);
-                } else {
+                    c.setForeground(COLOR_VENCIDO_FG);
+                } else if (fechaDevolucion != null) {
                     long diff = fechaDevolucion.getTime() - hoy.getTime();
                     long diffDays = TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
                     if (diffDays <= 3) { // Próximo a vencer (ej. 3 días o menos)
                         c.setBackground(COLOR_PROXIMO_VENCER);
+                        c.setForeground(COLOR_PROXIMO_VENCER_FG);
                     } else {
-                        c.setBackground(table.getBackground());
+                        c.setBackground(Color.WHITE);
+                        c.setForeground(table.getForeground());
                     }
+                } else {
+                     c.setBackground(Color.WHITE);
+                     c.setForeground(table.getForeground());
                 }
             } else {
                 c.setBackground(COLOR_DEVUELTO);
+                c.setForeground(COLOR_DEVUELTO_FG);
             }
 
             return c;
-
+        }
     }
-}
 }

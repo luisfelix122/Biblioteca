@@ -3,7 +3,7 @@ package com.universidad.biblioteca.vista.bibliotecario;
 import com.universidad.biblioteca.controlador.PrestamoDAO;
 import com.universidad.biblioteca.modelo.Prestamo;
 import com.universidad.biblioteca.modelo.Usuario;
-import com.universidad.biblioteca.vista.main.MainView;
+import com.universidad.biblioteca.vista.utils.RoundedBorder;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -12,77 +12,87 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.sql.SQLException;
+
 import java.util.ArrayList;
 import java.util.List;
-import com.universidad.biblioteca.vista.utils.RoundedBorder;
 
 public class HistorialPanel extends JPanel {
-
-    private static final Color BACKGROUND_COLOR = new Color(243, 244, 246);
-    private static final Color FOREGROUND_COLOR = new Color(55, 65, 81);
-    private static final Color BORDER_COLOR = new Color(209, 213, 219);
-    private static final Font TEXT_FONT = new Font("Segoe UI", Font.PLAIN, 14);
-    private static final Font BOLD_FONT = new Font("Segoe UI", Font.BOLD, 14);
-    private static final Font BUTTON_FONT = new Font("Segoe UI", Font.BOLD, 14);
-
-    private static final String[] TABLE_HEADERS = {"ID Préstamo", "Libro", "Fecha Préstamo", "Fecha Devolución", "Multa", "Devuelto"};
-    private final MainView mainView;
-    private final PrestamoDAO prestamoDAO;
-    private final Usuario usuarioLogueado;
 
     private DefaultTableModel modeloHistorial;
     private TableRowSorter<DefaultTableModel> sorter;
     private JTextField campoBusqueda;
     private JComboBox<String> comboFiltroDevuelto;
 
-    public HistorialPanel(MainView mainView, PrestamoDAO prestamoDAO, Usuario usuarioLogueado) {
-        this.mainView = mainView;
-        this.prestamoDAO = prestamoDAO;
-        this.usuarioLogueado = usuarioLogueado;
+    private PrestamoDAO prestamoDAO;
+
+    private static final Color BACKGROUND_COLOR = new Color(243, 244, 246);
+    private static final Color FOREGROUND_COLOR = new Color(55, 65, 81);
+    private static final Color BORDER_COLOR = new Color(209, 213, 219);
+    private static final Color PRIMARY_BUTTON_COLOR = new Color(67, 56, 202);
+    private static final Font TITLE_FONT = new Font("Segoe UI", Font.BOLD, 24);
+    private static final Font TEXT_FONT = new Font("Segoe UI", Font.PLAIN, 14);
+    private static final Font BOLD_FONT = new Font("Segoe UI", Font.BOLD, 14);
+    private static final Font BUTTON_FONT = new Font("Segoe UI", Font.BOLD, 14);
+
+    private static final String[] TABLE_HEADERS = {"ID Préstamo", "Libro", "Usuario", "Fecha Préstamo", "Fecha Devolución", "Multa", "Devuelto"};
+
+
+
+    public HistorialPanel(Usuario usuario) {
+        this.prestamoDAO = new PrestamoDAO();
 
         setLayout(new BorderLayout(20, 20));
         setBorder(new EmptyBorder(20, 20, 20, 20));
         setBackground(BACKGROUND_COLOR);
 
-        initUI();
-        cargarDatosHistorial();
+        String rol = usuario.getRol().getNombre();
+        if (!rol.equals("Bibliotecario") && !rol.equals("Administrador")) {
+            JOptionPane.showMessageDialog(this, "Acceso denegado. No tienes permiso para acceder a esta sección.", "Error de acceso", JOptionPane.ERROR_MESSAGE);
+            add(new JLabel("Acceso denegado"));
+        } else {
+            initUI();
+            cargarDatosHistorial();
+        }
     }
 
     private void initUI() {
-        add(createFilterPanel(), BorderLayout.NORTH);
-        add(new JScrollPane(createTable()), BorderLayout.CENTER);
+        // Título
+        JLabel titleLabel = new JLabel("Historial de Préstamos", SwingConstants.CENTER);
+        titleLabel.setFont(TITLE_FONT);
+        titleLabel.setForeground(FOREGROUND_COLOR);
+        titleLabel.setBorder(new EmptyBorder(0, 0, 20, 0));
+        add(titleLabel, BorderLayout.NORTH);
+
+        // Panel de contenido que incluye filtros y tabla
+        JPanel contentPanel = new JPanel(new BorderLayout(20, 20));
+        contentPanel.setBackground(BACKGROUND_COLOR);
+        contentPanel.add(createFilterPanel(), BorderLayout.NORTH);
+        contentPanel.add(new JScrollPane(createTable()), BorderLayout.CENTER);
+
+        add(contentPanel, BorderLayout.CENTER);
     }
 
     private JPanel createFilterPanel() {
-        JPanel filterPanel = new JPanel(new GridBagLayout());
-        filterPanel.setBorder(new EmptyBorder(0, 0, 20, 0));
-        filterPanel.setBackground(BACKGROUND_COLOR);
-        GridBagConstraints gbc = new GridBagConstraints();
+        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 25, 5));
+        filterPanel.setBackground(Color.WHITE);
+        filterPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER_COLOR, 1, true),
+                new EmptyBorder(15, 20, 15, 20)
+        ));
 
-        gbc.insets = new Insets(0, 0, 0, 15);
-        gbc.anchor = GridBagConstraints.WEST;
+        filterPanel.add(new JLabel("Buscar por libro:"));
+        campoBusqueda = createStyledTextField(25);
+        filterPanel.add(campoBusqueda);
 
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        filterPanel.add(new JLabel("Buscar por libro:"), gbc);
-
-        gbc.gridx = 1;
-        campoBusqueda = createStyledTextField(30);
-        filterPanel.add(campoBusqueda, gbc);
-
-        gbc.gridx = 2;
-        filterPanel.add(new JLabel("Estado:"), gbc);
-
-        gbc.gridx = 3;
+        filterPanel.add(new JLabel("Estado:"));
         comboFiltroDevuelto = createStyledComboBox(new String[]{"Todos", "Devueltos", "No Devueltos"});
-        filterPanel.add(comboFiltroDevuelto, gbc);
+        JPanel comboPanel = new JPanel(new BorderLayout());
+        comboPanel.add(comboFiltroDevuelto, BorderLayout.CENTER);
+        filterPanel.add(comboPanel);
 
-        gbc.gridx = 4;
-        gbc.weightx = 1.0;
-        gbc.anchor = GridBagConstraints.EAST;
-        JButton botonFiltrar = createStyledButton("Filtrar", new Color(67, 56, 202), Color.WHITE);
-        botonFiltrar.addActionListener(e -> aplicarFiltros());
-        filterPanel.add(botonFiltrar, gbc);
+        JButton botonFiltrar = createStyledButton("Filtrar", PRIMARY_BUTTON_COLOR, Color.WHITE);
+        botonFiltrar.addActionListener(_ -> aplicarFiltros());
+        filterPanel.add(botonFiltrar);
 
         return filterPanel;
     }
@@ -104,11 +114,12 @@ public class HistorialPanel extends JPanel {
     public void cargarDatosHistorial() {
         try {
             modeloHistorial.setRowCount(0);
-            List<Prestamo> prestamos = prestamoDAO.obtenerPrestamosPorUsuario(usuarioLogueado.getCodigo());
+            List<Prestamo> prestamos = prestamoDAO.obtenerTodosLosPrestamos();
             for (Prestamo prestamo : prestamos) {
                 modeloHistorial.addRow(new Object[]{
                         prestamo.getId(),
                         prestamo.getLibro() != null ? prestamo.getLibro().getTitulo() : "(Libro no disponible)",
+                        prestamo.getUsuario() != null ? prestamo.getUsuario().getNombre() : "(Usuario no disponible)",
                         prestamo.getFechaPrestamo(),
                         prestamo.getFechaDevolucion(),
                         prestamo.getMulta(),
@@ -116,7 +127,7 @@ public class HistorialPanel extends JPanel {
                 });
             }
         } catch (SQLException e) {
-            mainView.mostrarError("Error al cargar el historial de préstamos: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Error al cargar el historial de préstamos: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -137,40 +148,11 @@ public class HistorialPanel extends JPanel {
         header.setBorder(BorderFactory.createLineBorder(BORDER_COLOR));
     }
 
-    private JTextField createStyledTextField(int columns) {
-        JTextField textField = new JTextField(columns);
-        textField.setFont(TEXT_FONT);
-        textField.setBorder(BorderFactory.createCompoundBorder(
-                new RoundedBorder(BORDER_COLOR, 10),
-                new EmptyBorder(10, 15, 10, 15)
-        ));
-        textField.setBackground(Color.WHITE);
-        textField.setForeground(FOREGROUND_COLOR);
-        return textField;
-    }
 
-    private JComboBox<String> createStyledComboBox(String[] items) {
-        JComboBox<String> comboBox = new JComboBox<>(items);
-        comboBox.setFont(TEXT_FONT);
-        comboBox.setBackground(Color.WHITE);
-        comboBox.setForeground(FOREGROUND_COLOR);
-        comboBox.setBorder(BorderFactory.createCompoundBorder(
-                new RoundedBorder(BORDER_COLOR, 10),
-                new EmptyBorder(5, 10, 5, 10)
-        ));
-        return comboBox;
-    }
 
-    private JButton createStyledButton(String text, Color background, Color foreground) {
-        JButton button = new JButton(text);
-        button.setFont(BUTTON_FONT);
-        button.setBackground(background);
-        button.setForeground(foreground);
-        button.setFocusPainted(false);
-        button.setBorder(new EmptyBorder(12, 25, 12, 25));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return button;
-    }
+
+
+
 
     private void aplicarFiltros() {
         RowFilter<DefaultTableModel, Object> rf = null;
@@ -194,5 +176,39 @@ public class HistorialPanel extends JPanel {
         }
 
         sorter.setRowFilter(rf);
+    }
+
+    private JTextField createStyledTextField(int columns) {
+        JTextField textField = new JTextField(columns);
+        textField.setFont(TEXT_FONT);
+        textField.setBackground(Color.WHITE);
+        textField.setForeground(FOREGROUND_COLOR);
+        textField.setBorder(new RoundedBorder(BORDER_COLOR, 10));
+        textField.setPreferredSize(new Dimension(textField.getPreferredSize().width, 35));
+        return textField;
+    }
+
+    private <T> JComboBox<T> createStyledComboBox(T[] items) {
+        JComboBox<T> comboBox = new JComboBox<>(items);
+        comboBox.setFont(TEXT_FONT);
+        comboBox.setBackground(Color.WHITE);
+        comboBox.setForeground(FOREGROUND_COLOR);
+        // comboBox.setBorder(new RoundedBorder(BORDER_COLOR, 10));
+        comboBox.setPreferredSize(new Dimension(150, 35));
+        comboBox.setMinimumSize(new Dimension(150, 35));
+        comboBox.setMaximumSize(new Dimension(150, 35));
+        comboBox.setEditable(false);
+        return comboBox;
+    }
+
+    private JButton createStyledButton(String text, Color background, Color foreground) {
+        JButton button = new JButton(text);
+        button.setFont(BUTTON_FONT);
+        button.setBackground(background);
+        button.setForeground(foreground);
+        button.setFocusPainted(false);
+        button.setBorder(new RoundedBorder(background, 10));
+        button.setPreferredSize(new Dimension(button.getPreferredSize().width, 35));
+        return button;
     }
 }

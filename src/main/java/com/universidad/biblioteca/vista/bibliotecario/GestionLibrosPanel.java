@@ -1,214 +1,252 @@
 package com.universidad.biblioteca.vista.bibliotecario;
-import com.universidad.biblioteca.controlador.LibroDAO;
 import com.universidad.biblioteca.modelo.Libro;
-import com.universidad.biblioteca.vista.main.MainView;
+import com.universidad.biblioteca.modelo.Usuario;
+import com.universidad.biblioteca.controlador.LibroDAO;
+
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
 import java.awt.*;
+
 import java.sql.SQLException;
-import com.universidad.biblioteca.vista.utils.RoundedBorder;
+import java.util.ArrayList;
+import java.util.List;
+
 public class GestionLibrosPanel extends JPanel {
-    private static final Color BACKGROUND_COLOR = new Color(243, 244, 246);
-    private static final Color FOREGROUND_COLOR = new Color(55, 65, 81);
-    private static final Color BORDER_COLOR = new Color(209, 213, 219);
-    private static final Font TEXT_FONT = new Font("Segoe UI", Font.PLAIN, 14);
-    private static final Font BUTTON_FONT = new Font("Segoe UI", Font.BOLD, 14);
-    private final MainView mainView;
-    private final LibroDAO libroDAO;
-    private JTable tablaLibros;
-    private DefaultTableModel modeloTabla;
 
-    public GestionLibrosPanel(MainView mainView, LibroDAO libroDAO) {
-        this.mainView = mainView;
-        this.libroDAO = libroDAO;
-        setLayout(new BorderLayout(20, 20));
-        setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        setBackground(BACKGROUND_COLOR);
-        initUI();
-        cargarLibros();
-    }
+        private DefaultTableModel tableModel;
+    private JTable librosTable;
+    private JTextField isbnField, tituloField, autorField, anioField, estadoField;
+    private JButton addButton, editButton, deleteButton;
 
-    private void initUI() {
-        // Panel de Acciones (Norte)
-        add(createActionsPanel(), BorderLayout.NORTH);
 
-        // Tabla de Libros (Centro)
-        JScrollPane scrollPane = new JScrollPane(createTable());
-        add(scrollPane, BorderLayout.CENTER);
-    }
 
-    private JTable createTable() {
-        modeloTabla = new DefaultTableModel(new String[]{"ID", "Título", "Autor", "Año", "Disponible"}, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
+    private List<Libro> libros = new ArrayList<>();
+    private LibroDAO libroDAO;
+
+    public GestionLibrosPanel(Usuario usuario) {
+        setLayout(new BorderLayout(10, 10));
+        setBackground(new Color(240, 240, 240)); // Color de fondo similar al resto del sistema
+
+        libroDAO = new LibroDAO();
+
+        // Panel de formulario de entrada
+        JPanel formPanel = new JPanel(new GridLayout(5, 2, 5, 5));
+        formPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        formPanel.setBackground(new Color(240, 240, 240));
+
+        formPanel.add(new JLabel("ISBN:"));
+        isbnField = new JTextField();
+        formPanel.add(isbnField);
+
+        formPanel.add(new JLabel("Título:"));
+        tituloField = new JTextField();
+        formPanel.add(tituloField);
+
+        formPanel.add(new JLabel("Autor:"));
+        autorField = new JTextField();
+        formPanel.add(autorField);
+
+        formPanel.add(new JLabel("Año:"));
+        anioField = new JTextField();
+        formPanel.add(anioField);
+
+        formPanel.add(new JLabel("Estado:"));
+        estadoField = new JTextField();
+        formPanel.add(estadoField);
+
+        // Panel de botones
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        buttonPanel.setBackground(new Color(240, 240, 240));
+
+        addButton = new JButton("Agregar");
+        editButton = new JButton("Editar");
+        deleteButton = new JButton("Eliminar");
+
+        styleButton(addButton);
+        styleButton(editButton);
+        styleButton(deleteButton);
+
+        buttonPanel.add(addButton);
+        buttonPanel.add(editButton);
+        buttonPanel.add(deleteButton);
+
+        // Añadir listeners a los botones
+        addButton.addActionListener(this::agregarLibro);
+        editButton.addActionListener(this::editarLibro);
+        deleteButton.addActionListener(this::eliminarLibro);
+
+        // Tabla de libros
+        String[] columnNames = {"ISBN", "Título", "Autor", "Año", "Estado"};
+        tableModel = new DefaultTableModel(columnNames, 0);
+        librosTable = new JTable(tableModel);
+        librosTable.setFillsViewportHeight(true);
+        librosTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        librosTable.getTableHeader().setBackground(new Color(85, 65, 118)); // Color de cabecera
+        librosTable.getTableHeader().setForeground(Color.WHITE);
+        librosTable.setRowHeight(25);
+        librosTable.setGridColor(new Color(200, 200, 200));
+
+        // Add a ListSelectionListener to the table
+        librosTable.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) { // Ensure the event is not a partial adjustment
+                cargarLibroSeleccionado();
             }
-        };
-        tablaLibros = new JTable(modeloTabla);
-        styleTable(tablaLibros);
-        return tablaLibros;
+        });
+
+        JScrollPane scrollPane = new JScrollPane(librosTable);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
+
+        // Añadir componentes al panel principal
+        add(formPanel, BorderLayout.NORTH);
+        add(buttonPanel, BorderLayout.CENTER);
+        add(scrollPane, BorderLayout.SOUTH);
+
+        // Cargar algunos datos de ejemplo
+        cargarLibrosDesdeBD();
     }
 
-    private JPanel createActionsPanel() {
-        JPanel actionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        actionsPanel.setBackground(BACKGROUND_COLOR);
-
-        JButton btnAgregar = createStyledButton("Agregar Libro", new Color(67, 56, 202), Color.WHITE);
-        btnAgregar.addActionListener(e -> agregarLibro());
-
-        JButton btnEditar = createStyledButton("Editar Libro", new Color(249, 115, 22), Color.WHITE);
-        btnEditar.addActionListener(e -> editarLibro());
-
-        JButton btnEliminar = createStyledButton("Eliminar Libro", new Color(239, 68, 68), Color.WHITE);
-        btnEliminar.addActionListener(e -> eliminarLibro());
-
-        actionsPanel.add(btnAgregar);
-        actionsPanel.add(btnEditar);
-        actionsPanel.add(btnEliminar);
-        return actionsPanel;
+    private void styleButton(JButton button) {
+        button.setBackground(new Color(85, 65, 118)); // Color de fondo
+        button.setForeground(Color.WHITE); // Color de texto
+        button.setFocusPainted(false);
+        button.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        button.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
     }
 
-    private void cargarLibros() {
+    private void cargarLibrosDesdeBD() {
         try {
-            modeloTabla.setRowCount(0);
-            for (Libro libro : libroDAO.obtenerTodosLosLibros()) {
-                modeloTabla.addRow(new Object[]{libro.getIsbn(), libro.getTitulo(), libro.getAutor(), libro.getAnioPublicacion(), libro.isDisponible() ? "Sí" : "No"});
-            }
-        } catch (SQLException e) {
-            mainView.mostrarError("Error al cargar los libros: " + e.getMessage());
+            libros = libroDAO.obtenerTodosLosLibros();
+            actualizarTabla();
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al cargar libros desde la base de datos: " + ex.getMessage(), "Error de Base de Datos", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
         }
     }
 
-    private void agregarLibro() {
-        JPanel panel = createFormPanel(null);
-        int option = JOptionPane.showConfirmDialog(this, panel, "Agregar Nuevo Libro", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+    private void actualizarTabla() {
+        tableModel.setRowCount(0); // Limpiar tabla
+        for (Libro libro : libros) {
+            tableModel.addRow(new Object[]{libro.getIsbn(), libro.getTitulo(), libro.getAutor(), libro.getAnioPublicacion(), libro.isDisponible() ? "Disponible" : "Prestado"});
+        }
+    }
 
-        if (option == JOptionPane.OK_OPTION) {
+    private void limpiarCampos() {
+        isbnField.setText("");
+        tituloField.setText("");
+        autorField.setText("");
+        anioField.setText("");
+        estadoField.setText("");
+    }
+
+    private void agregarLibro(java.awt.event.ActionEvent e) {
+        String isbn = isbnField.getText();
+        String titulo = tituloField.getText();
+        String autor = autorField.getText();
+        String anioStr = anioField.getText();
+        String estado = estadoField.getText();
+
+        if (!isbn.isEmpty() && !titulo.isEmpty() && !autor.isEmpty() && !anioStr.isEmpty() && !estado.isEmpty()) {
             try {
-                Libro libro = new Libro();
-                libro.setTitulo(((JTextField) panel.getComponent(1)).getText());
-                libro.setAutor(((JTextField) panel.getComponent(3)).getText());
-                libro.setAnioPublicacion(Integer.parseInt(((JTextField) panel.getComponent(5)).getText()));
-                libro.setDisponible(true);
-                libroDAO.insertar(libro);
-                cargarLibros();
-                mainView.getCatalogoPanel().cargarDatosCatalogo();
+                int anio = Integer.parseInt(anioStr);
+                Libro nuevoLibro = new Libro();
+                nuevoLibro.setIsbn(isbn);
+                nuevoLibro.setTitulo(titulo);
+                nuevoLibro.setAutor(autor);
+                nuevoLibro.setAnioPublicacion(anio);
+                nuevoLibro.setDisponible("Disponible".equalsIgnoreCase(estado));
+
+                // Check if book with ISBN already exists
+                if (libroDAO.obtenerPorId(isbn) != null) {
+                    JOptionPane.showMessageDialog(this, "Ya existe un libro con el ISBN: " + isbn, "Error de ISBN Duplicado", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                libroDAO.insertar(nuevoLibro);
+
+                libros.add(nuevoLibro);
+                actualizarTabla();
+                limpiarCampos();
+                JOptionPane.showMessageDialog(this, "Libro agregado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
             } catch (NumberFormatException ex) {
-                mainView.mostrarError("El año debe ser un número válido.");
+                JOptionPane.showMessageDialog(this, "El año debe ser un número válido.", "Error de Formato", JOptionPane.ERROR_MESSAGE);
             } catch (SQLException ex) {
-                mainView.mostrarError("Error al agregar el libro: " + ex.getMessage());
+                JOptionPane.showMessageDialog(this, "Error al agregar el libro a la base de datos: " + ex.getMessage(), "Error de Base de Datos", JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
             }
+        } else {
+            JOptionPane.showMessageDialog(this, "Por favor, complete todos los campos.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void editarLibro() {
-        int selectedRow = tablaLibros.getSelectedRow();
-        if (selectedRow == -1) {
-            mainView.mostrarMensaje("Por favor, seleccione un libro para editar.");
-            return;
-        }
+    private void editarLibro(java.awt.event.ActionEvent e) {
+        int selectedRow = librosTable.getSelectedRow();
+        if (selectedRow >= 0) {
+            String isbn = isbnField.getText();
+            String titulo = tituloField.getText();
+            String autor = autorField.getText();
+            String anioStr = anioField.getText();
+            String estado = estadoField.getText();
 
-        int libroId = (int) modeloTabla.getValueAt(selectedRow, 0);
-        try {
-            Libro libro = libroDAO.obtenerPorId(libroId);
-            if (libro != null) {
-                JPanel panel = createFormPanel(libro);
-                int option = JOptionPane.showConfirmDialog(this, panel, "Editar Libro", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-
-                if (option == JOptionPane.OK_OPTION) {
-                    libro.setTitulo(((JTextField) panel.getComponent(1)).getText());
-                    libro.setAutor(((JTextField) panel.getComponent(3)).getText());
-                    libro.setAnioPublicacion(Integer.parseInt(((JTextField) panel.getComponent(5)).getText()));
+            if (!isbn.isEmpty() && !titulo.isEmpty() && !autor.isEmpty() && !anioStr.isEmpty() && !estado.isEmpty()) {
+                Libro libro = libros.get(selectedRow);
+                libro.setIsbn(isbn);
+                libro.setTitulo(titulo);
+                libro.setAutor(autor);
+                try {
+                    libro.setAnioPublicacion(Integer.parseInt(anioStr));
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(this, "El año debe ser un número válido.", "Error de Formato", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                libro.setDisponible("Disponible".equalsIgnoreCase(estado));
+                try {
                     libroDAO.actualizar(libro);
-                    cargarLibros();
-                    mainView.getCatalogoPanel().cargarDatosCatalogo();
+                    actualizarTabla();
+                    limpiarCampos();
+                    JOptionPane.showMessageDialog(this, "Libro actualizado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                } catch (SQLException ex) {
+                    JOptionPane.showMessageDialog(this, "Error al actualizar el libro en la base de datos: " + ex.getMessage(), "Error de Base de Datos", JOptionPane.ERROR_MESSAGE);
+                    ex.printStackTrace();
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Por favor, complete todos los campos.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Seleccione un libro para editar.", "Advertencia", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    private void eliminarLibro(java.awt.event.ActionEvent e) {
+        int selectedRow = librosTable.getSelectedRow();
+        if (selectedRow >= 0) {
+            String isbn = (String) tableModel.getValueAt(selectedRow, 0);
+            int confirm = JOptionPane.showConfirmDialog(this, "¿Está seguro de que desea eliminar este libro?", "Confirmar Eliminación", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                try {
+                    libroDAO.eliminar(isbn);
+                    libros.remove(selectedRow);
+                    actualizarTabla();
+                    limpiarCampos();
+                    JOptionPane.showMessageDialog(this, "Libro eliminado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                } catch (SQLException ex) {
+                    JOptionPane.showMessageDialog(this, "Error al eliminar el libro de la base de datos: " + ex.getMessage(), "Error de Base de Datos", JOptionPane.ERROR_MESSAGE);
+                    ex.printStackTrace();
                 }
             }
-        } catch (NumberFormatException ex) {
-            mainView.mostrarError("El año debe ser un número válido.");
-        } catch (SQLException ex) {
-            mainView.mostrarError("Error al editar el libro: " + ex.getMessage());
+        } else {
+            JOptionPane.showMessageDialog(this, "Seleccione un libro para eliminar.", "Advertencia", JOptionPane.WARNING_MESSAGE);
         }
     }
 
-    private void eliminarLibro() {
-        int selectedRow = tablaLibros.getSelectedRow();
-        if (selectedRow == -1) {
-            mainView.mostrarMensaje("Por favor, seleccione un libro para eliminar.");
-            return;
+    // Método para cargar los datos del libro seleccionado en los campos de texto
+    private void cargarLibroSeleccionado() {
+        int selectedRow = librosTable.getSelectedRow();
+        if (selectedRow >= 0) {
+            isbnField.setText(tableModel.getValueAt(selectedRow, 0).toString());
+            tituloField.setText(tableModel.getValueAt(selectedRow, 1).toString());
+            autorField.setText(tableModel.getValueAt(selectedRow, 2).toString());
+            anioField.setText(tableModel.getValueAt(selectedRow, 3).toString());
+            estadoField.setText(tableModel.getValueAt(selectedRow, 4).toString());
         }
-
-        int libroId = (int) modeloTabla.getValueAt(selectedRow, 0);
-        int confirm = JOptionPane.showConfirmDialog(this, "¿Está seguro de que desea eliminar este libro?", "Confirmar Eliminación", JOptionPane.YES_NO_OPTION);
-
-        if (confirm == JOptionPane.YES_OPTION) {
-            try {
-                libroDAO.eliminar(libroId);
-                cargarLibros();
-                mainView.getCatalogoPanel().cargarDatosCatalogo();
-            } catch (SQLException ex) {
-                mainView.mostrarError("Error al eliminar el libro: " + ex.getMessage());
-            }
-        }
-    }
-
-    private JPanel createFormPanel(Libro libro) {
-        JPanel panel = new JPanel(new GridLayout(0, 2, 10, 10));
-        panel.setBackground(BACKGROUND_COLOR);
-
-        JTextField tituloField = createStyledTextField(libro != null ? libro.getTitulo() : "");
-        JTextField autorField = createStyledTextField(libro != null ? libro.getAutor() : "");
-        JTextField anioField = createStyledTextField(libro != null ? String.valueOf(libro.getAnioPublicacion()) : "");
-
-        panel.add(new JLabel("Título:"));
-        panel.add(tituloField);
-        panel.add(new JLabel("Autor:"));
-        panel.add(autorField);
-        panel.add(new JLabel("Año de Publicación:"));
-        panel.add(anioField);
-
-        return panel;
-    }
-
-    private void styleTable(JTable table) {
-        table.setBackground(Color.WHITE);
-        table.setForeground(FOREGROUND_COLOR);
-        table.setSelectionBackground(new Color(199, 210, 254));
-        table.setSelectionForeground(FOREGROUND_COLOR);
-        table.setFont(TEXT_FONT);
-        table.setRowHeight(30);
-        table.setShowGrid(false);
-        table.setIntercellSpacing(new Dimension(0, 0));
-
-        JTableHeader header = table.getTableHeader();
-        header.setBackground(new Color(229, 231, 235));
-        header.setForeground(new Color(107, 114, 128));
-        header.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        header.setBorder(BorderFactory.createLineBorder(BORDER_COLOR));
-    }
-
-    private JTextField createStyledTextField(String text) {
-        JTextField textField = new JTextField(text);
-        textField.setFont(TEXT_FONT);
-        textField.setBorder(BorderFactory.createCompoundBorder(
-                new RoundedBorder(BORDER_COLOR, 10),
-                new EmptyBorder(10, 15, 10, 15)
-        ));
-        textField.setBackground(Color.WHITE);
-        textField.setForeground(FOREGROUND_COLOR);
-        return textField;
-    }
-
-    private JButton createStyledButton(String text, Color background, Color foreground) {
-        JButton button = new JButton(text);
-        button.setFont(BUTTON_FONT);
-        button.setBackground(background);
-        button.setForeground(foreground);
-        button.setFocusPainted(false);
-        button.setBorder(new EmptyBorder(10, 20, 10, 20));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return button;
     }
 }
